@@ -1,9 +1,11 @@
 
 import 'package:BloodLine/screens/authenticate/authenticate.dart';
 import 'package:BloodLine/screens/home/home.dart';
+import 'package:BloodLine/screens/splash/loadingScreen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 
 class Wrapper extends StatelessWidget {
 
@@ -22,7 +24,7 @@ class Wrapper extends StatelessWidget {
             fontFamily: "Nunito"
         ),
         debugShowCheckedModeBanner: false,
-        home: Home(),
+        home: Loading(),
       );
     }
     return MaterialApp(

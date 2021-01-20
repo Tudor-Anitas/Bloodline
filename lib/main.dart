@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:BloodLine/screens/authenticate/authenticate.dart';
+import 'package:BloodLine/screens/home/home.dart';
 import 'package:BloodLine/screens/wrapper.dart';
 import 'package:BloodLine/services/auth.dart';
 import 'package:firebase_auth/firebase_auth.dart';
