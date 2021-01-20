@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "86184231020",
+    "project_id": "bloodline-3fb56",
+    "storage_bucket": "bloodline-3fb56.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:86184231020:android:593536e7116fedbeb2d849",
+        "android_client_info": {
+          "package_name": "com.puddlekraken.bloodline"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "86184231020-hlq0q8rr3iihes828lpgeu5mfmrj3qmc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD9zh9DAcmpmcfrKNJ01uIny-OHXiWTjz0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "86184231020-hlq0q8rr3iihes828lpgeu5mfmrj3qmc.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
