@@ -85,7 +85,6 @@ class LoginPageState extends State<LoginPage>{
         _loginWidth = windowHeight;
         // _loginHeight = _keyboardVisible ? windowHeight : windowHeight - 250;
 
-
         break;
 
       case 1: // login page
