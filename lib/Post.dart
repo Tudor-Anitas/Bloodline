@@ -6,6 +6,8 @@ class Post{
   String bloodType;
   String city;
   String date;
+  String description;
 
-  Post(this.profileImage, this.name, this.bloodType, this.city, this.date);
+  Post(this.profileImage, this.name, this.bloodType, this.city, this.date, this.description);
+
 }

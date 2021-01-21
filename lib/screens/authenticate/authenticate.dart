@@ -234,27 +234,27 @@ class LoginPageState extends State<LoginPage>{
 
           // login page
           AnimatedContainer(
-          padding: EdgeInsets.all(32),
-          height: _loginHeight,
-          width: _loginWidth,
-          curve: Curves.fastLinearToSlowEaseIn,
-          duration: Duration(
-              milliseconds: 1000
-          ),
-          transform: Matrix4.translationValues(_loginXOffset, _loginYOffset, 1),
-          decoration: BoxDecoration(
-              color: Colors.white.withOpacity(_loginOpacity),
-              borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(25),
-                  topRight: Radius.circular(25)
-              )
-          ),
-          //! The start of the page
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              Column(
-                children: <Widget>[
+            padding: EdgeInsets.all(32),
+            height: _loginHeight,
+            width: _loginWidth,
+            curve: Curves.fastLinearToSlowEaseIn,
+            duration: Duration(
+                milliseconds: 1000
+            ),
+            transform: Matrix4.translationValues(_loginXOffset, _loginYOffset, 1),
+            decoration: BoxDecoration(
+                color: Colors.white.withOpacity(_loginOpacity),
+                borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(25),
+                    topRight: Radius.circular(25)
+                )
+            ),
+            //! The start of the page
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                Column(
+                  children: <Widget>[
 
                   Container(
                     margin: EdgeInsets.only(bottom: 20),
@@ -298,7 +298,6 @@ class LoginPageState extends State<LoginPage>{
                           email: signInEmail.text.trim(),
                           password: signInPassword.text.trim()
                         );
-
                       },
                       child: Center(
                         child: Text(

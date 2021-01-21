@@ -7,13 +7,18 @@ import 'package:provider/provider.dart';
 import '../../Post.dart';
 
 
-class Home extends StatelessWidget {
+class Home extends StatefulWidget{
+  @override
+  State<StatefulWidget> createState() => HomeState();
+}
+
+class HomeState extends State<Home> {
 
   List<Post> posts = [
     Post(Container(decoration: const BoxDecoration(color: Colors.pink)),
-  'Tudor Anitas', 'AB+', 'Baia Mare', '25.03.2021'),
+  'Tudor Anitas', 'AB+', 'Baia Mare', '25.03.2021', "some description here for this patient"),
     Post(Container(decoration: const BoxDecoration(color: Colors.blue)),
-        'Tudor Anitas', 'AB+', 'Baia Mare', '25.03.2021')
+        'Tudor Anitas', 'AB+', 'Baia Mare', '25.03.2021', "again some description poor bastard")
   ];
 
   int _pageState = 0; // decides if it is a welcome, login or register
@@ -25,8 +30,15 @@ class Home extends StatelessWidget {
   double _postsWidth = 0;
   double _postsXOffset = 0; // the offset of the login page to the top side
   double _postsYOffset = 0;// the offset of the login page to the left side
-  double _postsOpacity = 1;
 
+  double _createPostHeight = 0;
+  double _createPostWidth = 0;
+  double _createPostXOffset = 0;
+  double _createPostYOffset = 0;
+
+
+  TextEditingController cityController = new TextEditingController();
+  TextEditingController descriptionController = new TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -41,10 +53,20 @@ class Home extends StatelessWidget {
       //? The posts menu
       case 0:
         _postsHeight = windowHeight - 170;
-        _postsWidth = windowHeight;
+        _postsWidth = windowWidth;
         _postsXOffset = 0;
         _postsYOffset = 170;
 
+        _createPostHeight = 0;
+        _createPostWidth = windowWidth;
+        _createPostXOffset = 0;
+        _createPostYOffset = windowHeight;
+        break;
+      case 1:
+        _createPostHeight = windowHeight - 170;
+        _createPostWidth = windowWidth;
+        _createPostXOffset = 0;
+        _createPostYOffset = 170;
     }
 
 
@@ -54,8 +76,13 @@ class Home extends StatelessWidget {
           //! The posts page
           Scaffold(
             backgroundColor: Colors.red[800],
+            //! Add a post button
             floatingActionButton: FloatingActionButton(
-              onPressed: (){},
+              onPressed: (){
+                  setState((){
+                    _pageState = 1;
+                  });
+                },
               backgroundColor: Colors.red[800],
               child: Icon(Icons.add),
               splashColor: Colors.deepPurple,
@@ -92,8 +119,86 @@ class Home extends StatelessWidget {
                 }
             ),
           )
+          ),
+          AnimatedContainer(
+            padding: EdgeInsets.all(32),
+            height: _createPostHeight,
+            width: _createPostWidth,
+            curve: Curves.fastLinearToSlowEaseIn,
+            duration: Duration(
+                milliseconds: 1000
+            ),
+            transform: Matrix4.translationValues(_createPostXOffset, _createPostYOffset, 1),
+            decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(25),
+                    topRight: Radius.circular(25)
+                )
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                Column(
+                  children: [
+                    Container(
+                      margin: EdgeInsets.only(bottom: 20),
+                      child: Text(
+                        "Create a post",
+                        style: TextStyle(
+                            fontSize: 20
+                        ),
+                      ),
+                    ),
+                    CustomInput(
+                      controller: cityController,
+                      hint: 'city',
+                    ),
+                    SizedBox(height: 20,),
+                    CustomInput(
+                      controller: descriptionController,
+                      hint: 'description'
+                    ),
+                    Container(
+                        margin: EdgeInsets.all(50),
+                        child: FlatButton(
+                            onPressed: (){
+                              setState((){
+                                _pageState = 0;
+                              });
+                            },
+                            child: Text("back"))
+                    ),
+                    Container(
+                        margin: EdgeInsets.all(50),
+                        child: FlatButton(
+                            onPressed: (){
+                              setState((){
+                                  posts.add(
+                                      Post(
+                                        Container(decoration: const BoxDecoration(color: Colors.pink)),
+                                        'Tot eu',
+                                        'AB+',
+                                        cityController.text.trim(),
+                                        '23.03.2011',
+                                        descriptionController.text.trim())
+                                  );
+
+                                  cityController.clear();
+                                  descriptionController.clear();
+                                  _pageState = 0;
+                                });
+                            },
+                            child: Text("done"))
+                    )
+                  ]
+                )
+              ],
+            ),
           )
+
         ],
+
       )
     );
   }
@@ -141,8 +246,15 @@ class CustomListTile extends StatelessWidget{
                     flex: 2,
                     child: Column(
                       children: [
-                        Text(name),
-                        Text(city)
+                        //! Margin between the top of the box and the name
+                        Expanded(child: Text(""), flex: 1,),
+                        Expanded(
+                            flex: 3,
+                            child: Text(name)
+                        ),
+                        Expanded(
+                            flex: 3,
+                            child: Text(city)),
                       ],
                     ),
                   ),
@@ -151,8 +263,14 @@ class CustomListTile extends StatelessWidget{
                     flex: 2,
                     child: Column(
                       children: [
-                        Text(bloodType),
-                        Text(date)
+                        Expanded(child: Text(""), flex: 1,),
+                        Expanded(
+                            flex: 3,
+                            child: Text(bloodType)
+                        ),
+                        Expanded(
+                            flex: 3,
+                            child: Text(date))
                       ],
                     ),
                   )
@@ -164,5 +282,46 @@ class CustomListTile extends StatelessWidget{
     );
   }
 
+}
+
+//? classes for custom inputs used for creating posts
+class CustomInput extends StatefulWidget{
+  final String hint;
+  final TextEditingController controller;
+  CustomInput({
+    this.hint,
+    this.controller,
+  });
+  @override
+  _CustomInputState createState() => _CustomInputState();
+}
+class _CustomInputState extends State<CustomInput> {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+          border: Border.all(
+              color: Color(0xFFBC7C7C7),
+              width: 2
+          ),
+          borderRadius: BorderRadius.circular(50)
+      ),
+      child: Row(
+        children: <Widget>[
+          // the input space
+          Expanded(
+            child: TextField(
+              controller: widget.controller,
+              decoration: InputDecoration(
+                contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                border: InputBorder.none,
+                hintText: widget.hint
+              ),
+            ),
+          )
+        ],
+      ),
+    );
+  }
 }
 
