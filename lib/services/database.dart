@@ -1,4 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/cupertino.dart';
+
+import '../Post.dart';
 
 class DatabaseService{
 
@@ -25,7 +28,7 @@ class DatabaseService{
 
   //? Adds the post into the general collection
   Future addPost(String name, String bloodtype, String hospital, String date, String expirationDate, String description, String uid) async{
-    return await userPosts.doc(uid).collection('posts').add({
+    return await userPosts.doc().set({
       'name': name,
       'bloodtype': bloodtype,
       'hospital': hospital,

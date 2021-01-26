@@ -7,6 +7,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../Post.dart';
+import 'package:intl/intl.dart';
 
 
 class Home extends StatefulWidget{
@@ -108,20 +109,32 @@ class HomeState extends State<Home> {
                   )
               ),
               //! The list of posts from the database
-              child: ListView.builder(
-                itemCount: posts.length,
-                itemBuilder: (context, index){
-                  return Card(
-                      child: CustomListTile(
-                        profileImage: posts[index].profileImage,
-                        name: posts[index].name,
-                        bloodType: posts[index].bloodType,
-                        city: posts[index].city,
-                        date: posts[index].date,
-                      )
-                    );
-                }
-            ),
+              child: StreamBuilder<QuerySnapshot>(
+                //! creates the connection to the posts branch
+                stream: FirebaseFirestore.instance.collection('posts').snapshots(),
+                builder: (context, snapshot){
+                  if(!snapshot.hasData) return Center();
+                  //! if there are posts in the database
+                  //! create a ListView that is filled with Cards
+                  return ListView.builder(
+                      itemCount: snapshot.data.docs.length,
+                      itemBuilder: (context, index){
+                        //! doc is the individual Post from the database
+                        final doc = snapshot.data.docs[index];
+                        return Card(
+                            child: CustomListTile(
+                              profileImage: Container(decoration: const BoxDecoration(color: Colors.pink)),
+                              name: doc['name'],
+                              bloodType: doc['bloodtype'],
+                              city: doc['hospital'],
+                              date: doc['date'],
+                            )
+                        );
+                      }
+                  );
+                },
+
+              ),
           )
           ),
           AnimatedContainer(
@@ -210,31 +223,35 @@ class HomeState extends State<Home> {
                                   //! get the user details from the database
                                   //! will use the 'name' and 'bloodtype' fields
                                   DocumentSnapshot userDetails = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+
+                                  //! Format the date to hide the hours and minutes
+                                  String expirationDateFormat = DateFormat("dd.MM.yyyy").format(_dateTime);
+                                  String postDate = DateFormat("dd.MM.yyyy").format(DateTime.now());
+
                                   //! add the post to the user history
                                   try {
                                     DatabaseService().addPostToUser(
                                         userDetails['name'],
                                         userDetails['bloodtype'],
                                         hospitalController.text,
-                                        DateTime.now().toString(),
-                                        _dateTime.toString(),
+                                        postDate,
+                                        expirationDateFormat,
+                                        descriptionController.text,
+                                        user.uid);
+
+                                    //! adds the post to the general user posts branch
+                                    DatabaseService().addPost(
+                                        userDetails['name'],
+                                        userDetails['bloodtype'],
+                                        hospitalController.text,
+                                        postDate,
+                                        expirationDateFormat,
                                         descriptionController.text,
                                         user.uid);
                                   } on FirebaseException catch(e){
                                     print(e.message);
                                   }
                                   setState(()  {
-
-                                    // posts.add(
-                                    //     Post(
-                                    //       Container(decoration: const BoxDecoration(color: Colors.pink)),
-                                    //       'Tot eu',
-                                    //       'AB+',
-                                    //       cityController.text.trim(),
-                                    //       '23.03.2011',
-                                    //       descriptionController.text.trim())
-                                    // );
-
                                     hospitalController.clear();
                                     descriptionController.clear();
                                     _pageState = 0;
