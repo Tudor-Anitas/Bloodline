@@ -1,6 +1,6 @@
-# flutter_app
+# Bloodline
 
-A new Flutter application.
+A social network for blood donors
 
 ## Getting Started
 
