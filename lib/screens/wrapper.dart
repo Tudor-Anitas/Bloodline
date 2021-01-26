@@ -1,6 +1,5 @@
 
 import 'package:BloodLine/screens/authenticate/authenticate.dart';
-import 'package:BloodLine/screens/home/home.dart';
 import 'package:BloodLine/screens/splash/loadingScreen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';

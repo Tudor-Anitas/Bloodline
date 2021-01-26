@@ -1,9 +1,11 @@
 import 'package:BloodLine/screens/authenticate/authenticate.dart';
 import 'package:BloodLine/services/auth.dart';
+import 'package:BloodLine/services/database.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:provider/provider.dart';
-
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../Post.dart';
 
 
@@ -37,8 +39,10 @@ class HomeState extends State<Home> {
   double _createPostYOffset = 0;
 
 
-  TextEditingController cityController = new TextEditingController();
+  TextEditingController hospitalController = new TextEditingController();
   TextEditingController descriptionController = new TextEditingController();
+
+  DateTime _dateTime;
 
   @override
   Widget build(BuildContext context) {
@@ -151,8 +155,8 @@ class HomeState extends State<Home> {
                       ),
                     ),
                     CustomInput(
-                      controller: cityController,
-                      hint: 'city',
+                      controller: hospitalController,
+                      hint: 'hospital',
                     ),
                     SizedBox(height: 20,),
                     CustomInput(
@@ -160,37 +164,87 @@ class HomeState extends State<Home> {
                       hint: 'description'
                     ),
                     Container(
-                        margin: EdgeInsets.all(50),
-                        child: FlatButton(
-                            onPressed: (){
-                              setState((){
-                                _pageState = 0;
-                              });
-                            },
-                            child: Text("back"))
+                      child: RaisedButton(
+                        child: Text('Expiration date'),
+                        onPressed: (){
+                          showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime(2021),
+                              lastDate: DateTime(2025)
+                          ).then((date) => _dateTime = date);
+                        },
+                      ),
                     ),
-                    Container(
-                        margin: EdgeInsets.all(50),
-                        child: FlatButton(
-                            onPressed: (){
-                              setState((){
-                                  posts.add(
-                                      Post(
-                                        Container(decoration: const BoxDecoration(color: Colors.pink)),
-                                        'Tot eu',
-                                        'AB+',
-                                        cityController.text.trim(),
-                                        '23.03.2011',
-                                        descriptionController.text.trim())
-                                  );
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        //! Back button
+                        Container(
+                            margin: EdgeInsets.all(10),
+                            child: FlatButton(
+                                onPressed: (){
+                                  setState((){
+                                    _pageState = 0;
+                                  });
+                                },
+                                child: Text("back"))
+                        ),
+                        //! Logout button
+                        Container(
+                            margin: EdgeInsets.all(10),
+                            child: RaisedButton(
+                                onPressed: (){
+                                  context.read<AuthService>().signOut();
+                                  Navigator.of(context).pushNamedAndRemoveUntil('/', (Route<dynamic> route) => false);
+                                },
+                                child: Text("logout"))
+                        ),
+                        //! Done button
+                        Container(
+                            margin: EdgeInsets.all(10),
+                            child: FlatButton (
+                                onPressed: () async{
+                                  //! get the user from the session
+                                  User user = FirebaseAuth.instance.currentUser;
+                                  //! get the user details from the database
+                                  //! will use the 'name' and 'bloodtype' fields
+                                  DocumentSnapshot userDetails = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+                                  //! add the post to the user history
+                                  try {
+                                    DatabaseService().addPostToUser(
+                                        userDetails['name'],
+                                        userDetails['bloodtype'],
+                                        hospitalController.text,
+                                        DateTime.now().toString(),
+                                        _dateTime.toString(),
+                                        descriptionController.text,
+                                        user.uid);
+                                  } on FirebaseException catch(e){
+                                    print(e.message);
+                                  }
+                                  setState(()  {
 
-                                  cityController.clear();
-                                  descriptionController.clear();
-                                  _pageState = 0;
-                                });
-                            },
-                            child: Text("done"))
+                                    // posts.add(
+                                    //     Post(
+                                    //       Container(decoration: const BoxDecoration(color: Colors.pink)),
+                                    //       'Tot eu',
+                                    //       'AB+',
+                                    //       cityController.text.trim(),
+                                    //       '23.03.2011',
+                                    //       descriptionController.text.trim())
+                                    // );
+
+                                    hospitalController.clear();
+                                    descriptionController.clear();
+                                    _pageState = 0;
+                                  });
+                                },
+                                child: Text("done"))
+                        )
+                      ],
                     )
+
                   ]
                 )
               ],
@@ -204,6 +258,7 @@ class HomeState extends State<Home> {
   }
 }
 
+//? the custom card which is used for created posts
 class CustomListTile extends StatelessWidget{
 
   final Widget profileImage;

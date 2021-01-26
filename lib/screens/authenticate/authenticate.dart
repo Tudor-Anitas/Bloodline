@@ -5,7 +5,6 @@ import 'package:keyboard_visibility/keyboard_visibility.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 
-
 class LoginPage extends StatefulWidget{
   @override
   State<StatefulWidget> createState() => LoginPageState();
@@ -34,6 +33,11 @@ class LoginPageState extends State<LoginPage>{
   double _headlineMargin = 0; // the offset of the header to the top
 
   bool _keyboardVisible = false;
+  var img;
+  var signInEmail = TextEditingController();
+  var signInPassword = TextEditingController();
+  var signUpEmail = TextEditingController();
+  var signUpPassword = TextEditingController();
 
   List<String> headlines = ["Text here", "Login", "Register"];
 
@@ -62,10 +66,7 @@ class LoginPageState extends State<LoginPage>{
     _loginHeight = windowHeight - 270;
     _registerHeight = windowHeight - 270;
 
-    final signInEmail = TextEditingController();
-    final signInPassword = TextEditingController();
-    final signUpEmail = TextEditingController();
-    final signUpPassword = TextEditingController();
+
 
     switch(_pageState){
 
@@ -84,7 +85,7 @@ class LoginPageState extends State<LoginPage>{
 
         _loginWidth = windowHeight;
         // _loginHeight = _keyboardVisible ? windowHeight : windowHeight - 250;
-
+        img = Image.asset('assets/images/welcome.png', fit: BoxFit.contain,);
         break;
 
       case 1: // login page
@@ -105,6 +106,8 @@ class LoginPageState extends State<LoginPage>{
 
         _loginXOffset = 0;
         _registerYOffset = windowHeight;
+
+        img = Text("");
         break;
 
       case 2: // the register page
@@ -193,10 +196,11 @@ class LoginPageState extends State<LoginPage>{
 
               // Image container
               Container(
+                padding: EdgeInsets.symmetric(horizontal: 75.0),
                 child: Center(
+                  child: img
+                )
 
-                  child: Text("Image"),
-                ),
               ),
 
 
@@ -272,6 +276,7 @@ class LoginPageState extends State<LoginPage>{
                     obscured: false,
                     controller: signInEmail,
                   ),
+
                   SizedBox(height: 20,),
                   //! Password input
                   InputWithIcon(
@@ -395,9 +400,10 @@ class LoginPageState extends State<LoginPage>{
                     child: FlatButton(
                       onPressed: (){
                         context.read<AuthService>().signUp(
-                            email: signUpEmail.text.trim(),
-                            password: signUpPassword.text.trim()
+                          email: signUpEmail.text,
+                          password: signUpPassword.text
                         );
+
                       },
                       child: Center(
                         child: Text(

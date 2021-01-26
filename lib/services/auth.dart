@@ -1,3 +1,4 @@
+import 'package:BloodLine/services/database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 
@@ -27,8 +28,18 @@ class AuthService{
     try{
       await _auth.createUserWithEmailAndPassword(email: email, password: password);
 
+      //? Put the user details into the firestore
+      User user = _auth.currentUser;
+      await DatabaseService().updateUserData("Tudor Anitas", "AB+", user.uid);
+
+      return "New account created";
     } on FirebaseAuthException catch (e){
-      e.message;
+      return e.message;
     }
+  }
+
+  String getUID(){
+    User user = _auth.currentUser;
+    return user.uid;
   }
 }
