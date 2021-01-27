@@ -1,9 +1,10 @@
 import 'package:BloodLine/services/auth.dart';
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:keyboard_visibility/keyboard_visibility.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
+import 'package:BloodLine/screens/authenticate/afterRegister.dart';
+
 
 class LoginPage extends StatefulWidget{
   @override
@@ -303,6 +304,7 @@ class LoginPageState extends State<LoginPage>{
                           email: signInEmail.text.trim(),
                           password: signInPassword.text.trim()
                         );
+
                       },
                       child: Center(
                         child: Text(
@@ -399,10 +401,15 @@ class LoginPageState extends State<LoginPage>{
                     padding: EdgeInsets.all(10),
                     child: FlatButton(
                       onPressed: (){
-                        context.read<AuthService>().signUp(
-                          email: signUpEmail.text,
-                          password: signUpPassword.text
-                        );
+                        try {
+                          context.read<AuthService>().signUp(
+                              email: signUpEmail.text,
+                              password: signUpPassword.text
+                          );
+                          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>Details()));
+                        } catch(e){
+                          print(e.toString());
+                        }
 
                       },
                       child: Center(
@@ -438,7 +445,8 @@ class LoginPageState extends State<LoginPage>{
               ),
             ],
           ),
-        )
+        ),
+
         ],
       )
     );
@@ -451,10 +459,15 @@ class PrimaryButton extends StatefulWidget{
 
   Color color = Color(0xff392F5A); // the color of the primary button
   final String buttonText; // text inside the button
-
+  final Function onPressed;
+  final double width;
+  final double height;
   PrimaryButton({
     this.buttonText,
     this.color,
+    this.width,
+    this.height,
+    this.onPressed
   });
 
   @override
@@ -465,19 +478,26 @@ class _PrimaryButtonState extends State<PrimaryButton> {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: widget.width,
+      height: widget.height,
       decoration: BoxDecoration(
         color: widget.color,
         borderRadius: BorderRadius.circular(50),
       ),
-      padding: EdgeInsets.all(20),
+      padding: EdgeInsets.all(10),
       child: Center(
-          child: Text(
-              "Login",
+          child: FlatButton(
+            onPressed: widget.onPressed,
+
+            child: Text(
+              widget.buttonText,
               style: TextStyle(
-                  color: Colors.white,
+                  color: Colors.grey[300],
                   fontSize: 16
               ),
-          ),
+            ),
+          )
+
         )
     );
   }
@@ -489,11 +509,13 @@ class OutlineButton extends StatefulWidget{
   Color color = Colors.black; // what color should be inside that button
   Color textColor = Colors.white;
   Color borderColor = Colors.black;
+  final Function onPressed;
   OutlineButton({
     this.text,
     this.color,
     this.textColor,
-    this.borderColor
+    this.borderColor,
+    this.onPressed
   });
 
 
@@ -515,18 +537,20 @@ class _OutlineButtonState extends State<OutlineButton>{
       ),
       padding: EdgeInsets.all(20),
       child: Center(
-        child: Text(
-          widget.text,
-          style: TextStyle(
-              color: widget.textColor,
-              fontSize: 16
+        child: FlatButton(
+          onPressed: widget.onPressed,
+          child: Text(
+            widget.text,
+            style: TextStyle(
+                color: widget.textColor,
+                fontSize: 16
+            ),
           ),
         ),
       ),
 
     );
   }
-
 }
 
 //? classes for custom inputs used for login and register

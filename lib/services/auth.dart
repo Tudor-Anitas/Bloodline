@@ -28,16 +28,17 @@ class AuthService{
     try{
       await _auth.createUserWithEmailAndPassword(email: email, password: password);
 
-      //? Put the user details into the firestore
-      User user = _auth.currentUser;
-      await DatabaseService().updateUserData("Tudor Anitas", "AB+", user.uid);
-
       return "New account created";
     } on FirebaseAuthException catch (e){
       return e.message;
     }
   }
 
+  Future updateNameAndBloodType(String name, String bloodtype) async{
+    //? Put the user details into the firestore
+    User user = _auth.currentUser;
+    await DatabaseService().updateUserData(name, bloodtype , user.uid);
+  }
   String getUID(){
     User user = _auth.currentUser;
     return user.uid;

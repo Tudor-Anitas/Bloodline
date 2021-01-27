@@ -1,14 +1,10 @@
 import 'package:BloodLine/screens/authenticate/authenticate.dart';
-import 'package:BloodLine/services/auth.dart';
 import 'package:BloodLine/services/database.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../Post.dart';
 import 'package:intl/intl.dart';
-
 
 class Home extends StatefulWidget{
   @override
@@ -44,6 +40,7 @@ class HomeState extends State<Home> {
   TextEditingController descriptionController = new TextEditingController();
 
   DateTime _dateTime;
+  String expirationDateText = 'Expiration date';
 
   @override
   Widget build(BuildContext context) {
@@ -137,6 +134,7 @@ class HomeState extends State<Home> {
               ),
           )
           ),
+          //! Create post page
           AnimatedContainer(
             padding: EdgeInsets.all(32),
             height: _createPostHeight,
@@ -167,25 +165,40 @@ class HomeState extends State<Home> {
                         ),
                       ),
                     ),
+                    //! Hospital input
                     CustomInput(
+                      color: Colors.grey[350],
                       controller: hospitalController,
                       hint: 'hospital',
                     ),
                     SizedBox(height: 20,),
+                    //! Description input
                     CustomInput(
+                      color: Colors.grey[350],
                       controller: descriptionController,
+                      height: 200,
                       hint: 'description'
                     ),
                     Container(
+                      margin: EdgeInsets.fromLTRB(0, 20, 0, 80),
                       child: RaisedButton(
-                        child: Text('Expiration date'),
+                        color: Colors.red[800],
+
+                        child: Text(
+                            expirationDateText,
+                            style: TextStyle(
+                              color: Colors.grey[300]
+                            ),
+                        ),
                         onPressed: (){
                           showDatePicker(
                               context: context,
                               initialDate: DateTime.now(),
                               firstDate: DateTime(2021),
                               lastDate: DateTime(2025)
-                          ).then((date) => _dateTime = date);
+                          ).then((date) => {
+                            _dateTime = date,
+                            expirationDateText = DateFormat('dd.MM.yyyy').format(date) });
                         },
                       ),
                     ),
@@ -195,28 +208,29 @@ class HomeState extends State<Home> {
                         //! Back button
                         Container(
                             margin: EdgeInsets.all(10),
-                            child: FlatButton(
+                            child: OutlineButton(
                                 onPressed: (){
                                   setState((){
                                     _pageState = 0;
                                   });
                                 },
-                                child: Text("back"))
+                                text: 'Cancel',
+                                width: 100,
+                                height: 40,
+                                textColor: Colors.black,
+                                color: Colors.white,
+                                borderColor: Colors.red[800],
+
+                            ),
                         ),
-                        //! Logout button
-                        Container(
-                            margin: EdgeInsets.all(10),
-                            child: RaisedButton(
-                                onPressed: (){
-                                  context.read<AuthService>().signOut();
-                                  Navigator.of(context).pushNamedAndRemoveUntil('/', (Route<dynamic> route) => false);
-                                },
-                                child: Text("logout"))
-                        ),
+
                         //! Done button
                         Container(
                             margin: EdgeInsets.all(10),
-                            child: FlatButton (
+                            child: PrimaryButton (
+                                height: 40,
+                                width: 100,
+                                color: Colors.red[800],
                                 onPressed: () async{
                                   //! get the user from the session
                                   User user = FirebaseAuth.instance.currentUser;
@@ -257,7 +271,9 @@ class HomeState extends State<Home> {
                                     _pageState = 0;
                                   });
                                 },
-                                child: Text("done"))
+                                buttonText: "Done",
+
+                            )
                         )
                       ],
                     )
@@ -324,9 +340,16 @@ class CustomListTile extends StatelessWidget{
                             flex: 3,
                             child: Text(name)
                         ),
-                        Expanded(
-                            flex: 3,
-                            child: Text(city)),
+                        Flexible(
+                          flex: 3,
+                          child: Container(
+                              padding: EdgeInsets.only(left: 10),
+                              child: Text(
+                                  city,
+                                  overflow: TextOverflow.ellipsis,
+                              )
+                          )
+                        ),
                       ],
                     ),
                   ),
@@ -360,9 +383,13 @@ class CustomListTile extends StatelessWidget{
 class CustomInput extends StatefulWidget{
   final String hint;
   final TextEditingController controller;
+  final Color color;
+  final double height;
   CustomInput({
     this.hint,
     this.controller,
+    this.color,
+    this.height
   });
   @override
   _CustomInputState createState() => _CustomInputState();
@@ -371,18 +398,22 @@ class _CustomInputState extends State<CustomInput> {
   @override
   Widget build(BuildContext context) {
     return Container(
+      height: widget.height,
       decoration: BoxDecoration(
           border: Border.all(
-              color: Color(0xFFBC7C7C7),
+              color: widget.color,
               width: 2
           ),
-          borderRadius: BorderRadius.circular(50)
+          borderRadius: BorderRadius.circular(14)
       ),
       child: Row(
         children: <Widget>[
           // the input space
           Expanded(
             child: TextField(
+              keyboardType: TextInputType.multiline,
+              minLines: 1,
+              maxLines: 10,
               controller: widget.controller,
               decoration: InputDecoration(
                 contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
@@ -397,3 +428,60 @@ class _CustomInputState extends State<CustomInput> {
   }
 }
 
+
+//? classes for contrast, secondary buttons
+class OutlineButton extends StatefulWidget{
+  String text; // what text to display inside the button
+  Color color = Colors.black; // what color should be inside that button
+  Color textColor = Colors.white;
+  Color borderColor = Colors.black;
+  double width;
+  double height;
+  final Function onPressed;
+  OutlineButton({
+    this.text,
+    this.color,
+    this.textColor,
+    this.borderColor,
+    this.width,
+    this.height,
+    this.onPressed
+  });
+
+
+  @override
+  _OutlineButtonState createState() => _OutlineButtonState();
+
+}
+class _OutlineButtonState extends State<OutlineButton>{
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: widget.width,
+      height: widget.height,
+      decoration: BoxDecoration(
+          border: Border.all(
+              color: widget.borderColor,
+              width: 2
+          ),
+          color: widget.color,
+          borderRadius: BorderRadius.circular(50)
+      ),
+      padding: EdgeInsets.all(2),
+      child: Center(
+        child: FlatButton(
+          onPressed: widget.onPressed,
+          highlightColor: Colors.red[700],
+          child: Text(
+            widget.text,
+            style: TextStyle(
+                color: widget.textColor,
+                fontSize: 16
+            ),
+          ),
+        ),
+      ),
+
+    );
+  }
+}
