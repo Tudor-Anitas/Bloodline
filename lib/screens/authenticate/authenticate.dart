@@ -462,11 +462,13 @@ class PrimaryButton extends StatefulWidget{
   final Function onPressed;
   final double width;
   final double height;
+  final double fontSize;
   PrimaryButton({
     this.buttonText,
     this.color,
     this.width,
     this.height,
+    this.fontSize,
     this.onPressed
   });
 
@@ -493,7 +495,7 @@ class _PrimaryButtonState extends State<PrimaryButton> {
               widget.buttonText,
               style: TextStyle(
                   color: Colors.grey[300],
-                  fontSize: 16
+                  fontSize: widget.fontSize
               ),
             ),
           )
