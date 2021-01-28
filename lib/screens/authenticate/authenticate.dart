@@ -1,3 +1,4 @@
+import 'package:BloodLine/screens/home/home.dart';
 import 'package:BloodLine/services/auth.dart';
 import 'package:flutter/material.dart';
 import 'package:keyboard_visibility/keyboard_visibility.dart';
@@ -97,15 +98,14 @@ class LoginPageState extends State<LoginPage>{
         _backgroundColor = Color(0xFF392F5A); // colors the background to purple
         _headerColor = Colors.white; // font color of the headline
 
-        _headlineMargin = 120; // margin of the headline to the top
+        _headlineMargin = windowHeight - windowHeight/1.15; // margin of the headline to the top
 
+        _loginHeight = _keyboardVisible ? windowHeight : windowHeight - windowHeight/4; // the height of the login card that stores the input and buttons
         _loginWidth = windowWidth;
+        _loginXOffset = 0; // how far right does the panel go
+        _loginYOffset = _keyboardVisible ? windowHeight - windowHeight/1.2 : windowHeight - windowHeight/1.5; // how far downwards does the card go while the keyboard is active
         _loginOpacity = 1;
 
-        _loginYOffset = _keyboardVisible ? 120 : 270; // how far upwards does the card go while the keyboard is active
-        _loginHeight = _keyboardVisible ? windowHeight : windowHeight - 270; // the height of the login card that stores the input and buttons
-
-        _loginXOffset = 0;
         _registerYOffset = windowHeight;
 
         img = Text("");
@@ -174,7 +174,6 @@ class LoginPageState extends State<LoginPage>{
                                 fontSize: 30,
                                 fontFamily: "Nunito"
                             ),
-
                           )),
                     ),
                     Container(
@@ -192,19 +191,13 @@ class LoginPageState extends State<LoginPage>{
                   ],
                 ),
               ),
-
-
-
               // Image container
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 75.0),
                 child: Center(
                   child: img
                 )
-
               ),
-
-
               // Button container
               Container(
                 child: GestureDetector(
@@ -229,7 +222,6 @@ class LoginPageState extends State<LoginPage>{
                         ),
                       ),
                     ),
-
                   ),
                 ),
               ),
@@ -256,87 +248,101 @@ class LoginPageState extends State<LoginPage>{
             ),
             //! The start of the page
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                Column(
-                  children: <Widget>[
 
-                  Container(
-                    margin: EdgeInsets.only(bottom: 20),
+              children: <Widget>[
+                Expanded(
+                  flex: 50,
+                  child: Container(
                     child: Text(
                       "Login To Continue",
                       style: TextStyle(
-                          fontSize: 20
+                          fontSize: windowWidth/20
                       ),
                     ),
                   ),
-                  //! Email input
-                  InputWithIcon(
-                    icon: Icons.email,
+                ),
+
+                //! Email input
+                Expanded(
+                  flex: 40,
+                  child: CustomInput(
+                    width: windowWidth*0.8,
+                    height: windowHeight*0.01,
                     hint: "Enter Email...",
+                    color: Colors.grey,
                     obscured: false,
                     controller: signInEmail,
                   ),
-
-                  SizedBox(height: 20,),
-                  //! Password input
-                  InputWithIcon(
-                    icon: Icons.vpn_key,
+                ),
+                //! Empty space
+                Expanded(child: Text(''), flex: 10,),
+                //! Password input
+                Expanded(
+                  flex: 40,
+                  child: CustomInput(
+                    width: windowWidth*0.8,
+                    height: windowHeight*0.01,
                     hint: "Enter Password...",
+                    color: Colors.grey,
                     obscured: true,
                     controller: signInPassword,
-                  )
-                ],
-              ),
-              //! Buttons
-              Column(
-                children: <Widget>[
-                  //! Login button
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Color(0xff392F5A),
-                      borderRadius: BorderRadius.circular(50),
-                    ),
-                    padding: EdgeInsets.all(10),
-                    child: FlatButton(
-                      onPressed: (){
-                        context.read<AuthService>().signIn(
-                          email: signInEmail.text.trim(),
-                          password: signInPassword.text.trim()
-                        );
+                    keyboardType: TextInputType.visiblePassword,
+                    maxLines: 1,
+                  ),
+                ),
+                //! Empty space
+                Expanded(child: Text(''), flex: 65,),
+                //! Login button
+                Expanded(
+                flex: 40,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Color(0xff392F5A),
+                    borderRadius: BorderRadius.circular(50),
+                  ),
+                  padding: EdgeInsets.all(10),
+                  child: FlatButton(
+                    onPressed: (){
+                      context.read<AuthService>().signIn(
+                        email: signInEmail.text.trim(),
+                        password: signInPassword.text.trim()
+                      );
 
-                      },
-                      child: Center(
-                        child: Text(
-                          "Login",
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16
-                          ),
+                    },
+                    child: Center(
+                      child: Text(
+                        "Login",
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16
                         ),
                       ),
                     ),
                   ),
-                  SizedBox(
-                    height: 20,
-                  ),
-                  //! Go to register button
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _pageState = 2;
-                      });
-
-                    },
-                    child: OutlineButton(
-                      text: "Create New Account",
-                      color: Colors.white,
-                      textColor: Color(0xff392F5A),
-                      borderColor: Color(0xff392F5A),
-                    ),
-                  )
-                ],
+                ),
               ),
+                //! Empty space
+                Expanded(child: Text(''), flex: 20,),
+                //! Go to register button
+                Expanded(
+                flex: 40,
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _pageState = 2;
+                    });
+
+                  },
+                  child: OutlineButton(
+                    text: "Create New Account",
+                    color: Colors.white,
+                    textColor: Color(0xff392F5A),
+                    borderColor: Color(0xff392F5A),
+                  ),
+                ),
+              ),
+                //! Empty space
+                Expanded(child: Text(''), flex: 50,),
             ],
           ),
         ),
@@ -361,11 +367,10 @@ class LoginPageState extends State<LoginPage>{
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
-              Column(
-                children: <Widget>[
-                  //! Start of the page
-                  Container(
-                    margin: EdgeInsets.only(bottom: 20),
+                //! Title
+                Expanded(
+                  flex: 50,
+                  child: Container(
                     child: Text(
                       "Create a New Account",
                       style: TextStyle(
@@ -373,27 +378,41 @@ class LoginPageState extends State<LoginPage>{
                       ),
                     ),
                   ),
-                  //! Email input
-                  InputWithIcon(
-                    icon: Icons.email,
+                ),
+                //! Email input
+                Expanded(
+                  flex: 40,
+                  child: CustomInput(
+                    width: windowWidth*0.8,
+                    height: windowHeight*0.01,
+                    color: Color(0xFF9dd9d2),
                     hint: "Enter Email...",
                     obscured: false,
+                    keyboardType: TextInputType.emailAddress,
+                    maxLines: 1,
                     controller: signUpEmail,
                   ),
-                  //! Password input
-                  SizedBox(height: 20,),
-                  InputWithIcon(
-                    icon: Icons.vpn_key,
+                ),
+                Expanded(child: Text(''), flex: 10,),
+                //! Password input
+                Expanded(
+                  flex: 40,
+                  child: CustomInput(
+                    width: windowWidth*0.8,
+                    height: windowHeight*0.01,
+                    color: Color(0xFF9dd9d2),
                     hint: "Enter Password...",
                     obscured: true,
+                    keyboardType: TextInputType.text,
+                    maxLines: 1,
                     controller: signUpPassword,
-                  )
-                ],
-              ),
-              Column(
-                children: <Widget>[
-                  //! Register button
-                  Container(
+                  ),
+                ),
+                Expanded(child: Text(''), flex: 65,),
+                //! Register button
+                Expanded(
+                  flex: 40,
+                  child: Container(
                     decoration: BoxDecoration(
                       color: Color(0xFF9dd9d2),
                       borderRadius: BorderRadius.circular(50),
@@ -423,11 +442,12 @@ class LoginPageState extends State<LoginPage>{
                       ),
                     ),
                   ),
-                  SizedBox(
-                    height: 20,
-                  ),
-                  //! Back to login button
-                  GestureDetector(
+                ),
+                Expanded(child: Text(''), flex: 20,),
+                //! Back to login button
+                Expanded(
+                  flex: 40,
+                  child: GestureDetector(
                     onTap: () {
                       setState(() {
                         _pageState = 1;
@@ -440,9 +460,9 @@ class LoginPageState extends State<LoginPage>{
                       textColor: Color(0xff777777),
                       borderColor: Color(0xFF9dd9d2),
                     ),
-                  )
-                ],
-              ),
+                  ),
+                ),
+
             ],
           ),
         ),
@@ -560,11 +580,18 @@ class InputWithIcon extends StatefulWidget{
   final IconData icon;
   final String hint;
   final bool obscured;
+  final double width;
+  final double height;
+  final double iconSize;
   final TextEditingController controller;
+
   InputWithIcon({
     this.icon,
     this.hint,
     this.obscured,
+    this.width,
+    this.height,
+    this.iconSize,
     this.controller,
   });
   @override
@@ -574,6 +601,8 @@ class _InputWithIconState extends State<InputWithIcon> {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: widget.width,
+      height: widget.height,
       decoration: BoxDecoration(
           border: Border.all(
               color: Color(0xFFBC7C7C7),
@@ -588,7 +617,7 @@ class _InputWithIconState extends State<InputWithIcon> {
               width: 60,
               child: Icon(
                 widget.icon,
-                size: 20,
+                size: widget.iconSize,
                 color: Color(0xFFBB9B9B9),
               )
           ),

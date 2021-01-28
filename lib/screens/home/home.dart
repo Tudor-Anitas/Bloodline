@@ -1,4 +1,4 @@
-import 'package:BloodLine/screens/authenticate/authenticate.dart';
+import 'package:BloodLine/services/auth.dart';
 import 'package:BloodLine/services/database.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -30,6 +30,7 @@ class HomeState extends State<Home> {
   double _postsWidth = 0;
   double _postsXOffset = 0; // the offset of the login page to the top side
   double _postsYOffset = 0;// the offset of the login page to the left side
+  double _postsOpacity = 1;
   Radius _postsBottomLeft = Radius.circular(0);
   Radius _postsBottomRight = Radius.circular(0);
 
@@ -57,10 +58,11 @@ class HomeState extends State<Home> {
     switch(_pageState){
       //? The posts menu
       case 0:
-        _postsHeight = windowHeight - windowHeight/9;
+        _postsHeight = windowHeight - windowHeight/5;
         _postsWidth = windowWidth;
         _postsXOffset = 0;
-        _postsYOffset = windowHeight/9;
+        _postsYOffset = windowHeight/5;
+        _postsOpacity = 1;
         _postsBottomLeft = Radius.circular(0);
         _postsBottomRight = Radius.circular(0);
 
@@ -77,10 +79,11 @@ class HomeState extends State<Home> {
         break;
       case 2:
         //? How will the Main page be displayed
-        _postsHeight = windowHeight/2 ;
+        _postsHeight = windowHeight/1.2 ;
         _postsWidth = windowWidth;
         _postsXOffset = -windowWidth/2;
-        _postsYOffset = -windowHeight/25;
+        _postsYOffset = windowHeight/10;
+        _postsOpacity = 0.7;
         _postsBottomLeft = Radius.circular(25);
         _postsBottomRight = Radius.circular(25);
 
@@ -92,32 +95,27 @@ class HomeState extends State<Home> {
 
 
     return Scaffold(
+      resizeToAvoidBottomPadding: false,
       body: Stack(
         children: [
-          //! The posts page
+
           Scaffold(
             backgroundColor: Colors.red[800],
-            //! Add a post button
-            floatingActionButton: FloatingActionButton(
-              onPressed: (){
-                  setState((){
-                    _pageState = 1;
-                  });
-                },
-              backgroundColor: Colors.red[800],
-              child: Icon(Icons.add),
-              splashColor: Colors.deepPurple,
-            ),
+
+
             //! The white space where posts lay
             body: Column(
               children: [
+                //! Empty space
+                Expanded(child: Text(''), flex: 10,),
+                //! Menu button
                 Expanded(
-                  flex: 1,
+                  flex: 10,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       Container(
-                        padding: EdgeInsets.only(top: 40),
+
                         child: FlatButton(
                             onPressed: (){
                               setState(() {
@@ -136,59 +134,109 @@ class HomeState extends State<Home> {
                     ],
                   ),
                 ),
-
+                //! Empty space
+                Expanded(child: Text(''), flex: 30,),
+                //! The menu options
                 Expanded(
-                  flex: 10,
-                  child: AnimatedContainer(
-                    curve: Curves.fastLinearToSlowEaseIn,
-                    duration: Duration(
-                        milliseconds: 700
-                    ),
-                    transform: Matrix4.translationValues(_postsXOffset, _postsYOffset, 1),
-                    width: _postsWidth,
-                    height: _postsHeight,
-                    decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(25),
-                            topRight: Radius.circular(25),
-                            bottomLeft: _postsBottomLeft,
-                            bottomRight: _postsBottomRight
-                        )
-                    ),
-                    //! The list of posts from the database
-                    child: StreamBuilder<QuerySnapshot>(
-                      //! creates the connection to the posts branch
-                      stream: FirebaseFirestore.instance.collection('posts').snapshots(),
-                      builder: (context, snapshot){
-                        if(!snapshot.hasData) return Center();
-                        //! if there are posts in the database
-                        //! create a ListView that is filled with Cards
-                        return ListView.builder(
-                            itemCount: snapshot.data.docs.length,
-                            itemBuilder: (context, index){
-                              //! doc is the individual Post from the database
-                              final doc = snapshot.data.docs[index];
-                              return Card(
-                                  child: CustomListTile(
-                                    height: windowHeight*0.1,
-                                    profileImage: Container(decoration: const BoxDecoration(color: Colors.pink)),
-                                    name: doc['name'],
-                                    bloodType: doc['bloodtype'],
-                                    city: doc['hospital'],
-                                    date: doc['date'],
-                                  )
-                              );
-                            }
-                        );
-                      },
+                  flex: 70,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      //! used to space out the column of buttons to be on the
+                      //! center of the open space
+                      Container(
+                        width: windowWidth/2,
+                      ),
+                      Column(
+                        children: [
+                          //! Add a post button
+                          OutlineButton(
+                            text: "Add post",
+                            color: Colors.red[800],
+                            borderColor: Colors.red[800],
+                            textColor: Colors.white,
+                            onPressed: (){
+                              setState(() {
+                                _pageState = 1;
+                              });
+                            },
+                          ),
+                          //! Logout button
+                          OutlineButton(
+                            text: "Logout",
+                            color: Colors.red[800],
+                            borderColor: Colors.red[800],
+                            textColor: Colors.white,
+                            onPressed: (){
+                              setState(() {
+                                AuthService(FirebaseAuth.instance).signOut();
+                                Navigator.of(context).pushNamedAndRemoveUntil('/', (Route<dynamic>route) => false);
 
-                    ),
-          ),
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
+
+                //! Empty space
+                Expanded(child: Text(''), flex: 60,),
               ],
             )
           ),
+
+          //! The posts page
+          AnimatedContainer(
+              curve: Curves.fastLinearToSlowEaseIn,
+              duration: Duration(
+                  milliseconds: 700
+              ),
+              transform: Matrix4.translationValues(_postsXOffset, _postsYOffset, 1),
+              width: _postsWidth,
+              height: _postsHeight,
+              decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(_postsOpacity),
+
+                  borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(25),
+                      topRight: Radius.circular(25),
+                      bottomLeft: _postsBottomLeft,
+                      bottomRight: _postsBottomRight
+                  )
+              ),
+              //! The list of posts from the database
+              child: StreamBuilder<QuerySnapshot>(
+                //! creates the connection to the posts branch
+                stream: FirebaseFirestore.instance.collection('posts').snapshots(),
+                builder: (context, snapshot){
+                  if(!snapshot.hasData) return Center();
+                  //! if there are posts in the database
+                  //! create a ListView that is filled with Cards
+                  return ListView.builder(
+                      itemCount: snapshot.data.docs.length,
+                      itemBuilder: (context, index){
+                        //! doc is the individual Post from the database
+                        final doc = snapshot.data.docs[index];
+                        return Card(
+                            child: CustomListTile(
+                              height: windowHeight*0.1,
+                              color: Colors.white.withOpacity(_postsOpacity),
+                              profileImage: Container(decoration: const BoxDecoration(color: Colors.pink)),
+                              name: doc['name'],
+                              bloodType: doc['bloodtype'],
+                              city: doc['hospital'],
+                              date: doc['date'],
+                            )
+                        );
+                      }
+                  );
+                },
+
+              ),
+            ),
+
           //! Create post page
           AnimatedContainer(
             padding: EdgeInsets.fromLTRB(32, 32, 32, 0),
@@ -230,7 +278,9 @@ class HomeState extends State<Home> {
                       width: windowWidth*0.8,
                       color: Colors.grey[350],
                       controller: hospitalController,
+                      obscured: false,
                       hint: 'hospital',
+                      keyboardType: TextInputType.multiline,
                     ),
                   ),
                   //! Empty space
@@ -246,7 +296,10 @@ class HomeState extends State<Home> {
                         color: Colors.grey[350],
                         controller: descriptionController,
                         height: windowHeight*0.25,
-                        hint: 'description'
+                        obscured: false,
+                        hint: 'description',
+                        keyboardType: TextInputType.multiline,
+                        maxLines: 10,
                     ),
                   ),
                   //! Empty space
@@ -388,7 +441,7 @@ class CustomListTile extends StatelessWidget{
   final String city;
   final String date;
   final double height;
-
+  final Color color;
 
   CustomListTile({
     Key key,
@@ -397,7 +450,8 @@ class CustomListTile extends StatelessWidget{
     this.bloodType,
     this.city,
     this.date,
-    this.height
+    this.height,
+    this.color
 }) : super(key: key);
 
   @override
@@ -405,6 +459,7 @@ class CustomListTile extends StatelessWidget{
     return Material(
         elevation: 5,
         shadowColor: Colors.grey,
+        color: color,
         child: Container(
           child: Padding(
             padding: EdgeInsets.all(10.0),
@@ -476,12 +531,21 @@ class CustomInput extends StatefulWidget{
   final Color color;
   final double height;
   final double width;
+  final TextInputType keyboardType;
+  int minLines = 1;
+  int maxLines = 1;
+  final obscured;
+
   CustomInput({
     this.hint,
     this.controller,
     this.color,
     this.height,
-    this.width
+    this.width,
+    this.obscured,
+    this.keyboardType,
+    this.minLines,
+    this.maxLines
   });
   @override
   _CustomInputState createState() => _CustomInputState();
@@ -504,10 +568,11 @@ class _CustomInputState extends State<CustomInput> {
           // the input space
           Expanded(
             child: TextField(
-              keyboardType: TextInputType.multiline,
-              minLines: 1,
-              maxLines: 10,
+              keyboardType: widget.keyboardType,
+              minLines: widget.minLines,
+              maxLines: widget.maxLines,
               controller: widget.controller,
+              obscureText: widget.obscured,
               decoration: InputDecoration(
                 contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
                 border: InputBorder.none,
@@ -580,3 +645,4 @@ class _OutlineButtonState extends State<OutlineButton>{
     );
   }
 }
+
