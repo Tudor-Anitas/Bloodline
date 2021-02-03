@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:BloodLine/services/auth.dart';
 import 'package:BloodLine/services/database.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -5,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../Post.dart';
 import 'package:intl/intl.dart';
+
+import '../../test.dart';
 
 class Home extends StatefulWidget{
   @override
@@ -34,11 +38,31 @@ class HomeState extends State<Home> {
   Radius _postsBottomLeft = Radius.circular(0);
   Radius _postsBottomRight = Radius.circular(0);
 
+  //? Blur screen size
+  double _blurWidth = 0;
+  double _blurHeight = 0;
+
   double _createPostHeight = 0;
   double _createPostWidth = 0;
   double _createPostXOffset = 0;
   double _createPostYOffset = 0;
 
+
+  //? To be added to the home page
+  double _postPageHeight = 0;
+  double _postPageWidth = 0;
+  double _postXOffset = 0;
+  double _postYOffset = 0;
+  // Fields that change dynamically when a Post button is pressed
+  String _postBloodType = '';
+  String _postDate = '';
+  String _postDescription = '';
+  String _postExpirationDate = '';
+  String _postHospital = '';
+  String _postAuthor = '';
+
+
+  Color _postColor = Colors.white;
 
   TextEditingController hospitalController = new TextEditingController();
   TextEditingController descriptionController = new TextEditingController();
@@ -56,8 +80,31 @@ class HomeState extends State<Home> {
 
     
     switch(_pageState){
-      //? The posts menu
-      case 0:
+
+      case 0: //? The posts menu
+        //? Rules for the main page that contains the posts
+        _postsHeight = windowHeight - windowHeight/5;
+        _postsWidth = windowWidth;
+        _postsXOffset = 0;
+        _postsYOffset = windowHeight/5;
+        _blurWidth = 0;
+        _blurHeight = 0;
+        _postsOpacity = 1;
+        _postsBottomLeft = Radius.circular(0);
+        _postsBottomRight = Radius.circular(0);
+
+        //? Rules for the Create Post Page
+        _createPostHeight = 0;
+        _createPostWidth = windowWidth;
+        _createPostXOffset = 0;
+        _createPostYOffset = windowHeight;
+
+        //? Rule for the Post description
+        _postPageHeight = 0;
+        break;
+      case 1: //? Create Post
+
+        //? Sets the Main Page back in place
         _postsHeight = windowHeight - windowHeight/5;
         _postsWidth = windowWidth;
         _postsXOffset = 0;
@@ -66,19 +113,15 @@ class HomeState extends State<Home> {
         _postsBottomLeft = Radius.circular(0);
         _postsBottomRight = Radius.circular(0);
 
-        _createPostHeight = 0;
-        _createPostWidth = windowWidth;
-        _createPostXOffset = 0;
-        _createPostYOffset = windowHeight;
-        break;
-      case 1:
+        //? Opens the Create Post page
         _createPostHeight = windowHeight - windowHeight/5.5;
         _createPostWidth = windowWidth;
         _createPostXOffset = 0;
         _createPostYOffset = windowHeight/5.5;
         break;
-      case 2:
+      case 2: //? Menu
         //? How will the Main page be displayed
+        //? Sets the Main Page to the left side and squeezes it
         _postsHeight = windowHeight/1.2 ;
         _postsWidth = windowWidth;
         _postsXOffset = -windowWidth/2;
@@ -87,18 +130,33 @@ class HomeState extends State<Home> {
         _postsBottomLeft = Radius.circular(25);
         _postsBottomRight = Radius.circular(25);
 
+        //? Hides the Create Post page
         _createPostHeight = 0;
         _createPostWidth = windowWidth;
         _createPostXOffset = 0;
         _createPostYOffset = windowHeight;
+        break;
+      case 3: //? Post Description
+
+        //? Opens the Post Description page
+         _postPageHeight = windowHeight/1.4;
+
+        _postXOffset = 0;
+        _postYOffset = 0;
+
+        _blurWidth = 5;
+        _blurHeight = 5;
+        break;
     }
 
 
     return Scaffold(
       resizeToAvoidBottomPadding: false,
+
       body: Stack(
         children: [
 
+          //! Side Menu
           Scaffold(
             backgroundColor: Colors.red[800],
 
@@ -175,6 +233,17 @@ class HomeState extends State<Home> {
                               });
                             },
                           ),
+                          OutlineButton(
+                            text: "Test",
+                            color: Colors.red[800],
+                            borderColor: Colors.red[800],
+                            textColor: Colors.white,
+                            onPressed: (){
+                              setState(() {
+                                Navigator.of(context).push(MaterialPageRoute(builder: (context)=>Testpage()));
+                              });
+                            },
+                          )
                         ],
                       ),
                     ],
@@ -188,54 +257,87 @@ class HomeState extends State<Home> {
           ),
 
           //! The posts page
-          AnimatedContainer(
-              curve: Curves.fastLinearToSlowEaseIn,
-              duration: Duration(
-                  milliseconds: 700
-              ),
-              transform: Matrix4.translationValues(_postsXOffset, _postsYOffset, 1),
-              width: _postsWidth,
-              height: _postsHeight,
-              decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(_postsOpacity),
+          Stack(
+            children: [
+                //! Gets all the information from database
+                //! and creates a listview filled with cards
+                AnimatedContainer(
+                    curve: Curves.fastLinearToSlowEaseIn,
+                    duration: Duration(
+                        milliseconds: 700
+                    ),
+                    transform: Matrix4.translationValues(_postsXOffset, _postsYOffset, 1),
+                    width: _postsWidth,
+                    height: _postsHeight,
+                    decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(_postsOpacity),
 
-                  borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(25),
-                      topRight: Radius.circular(25),
-                      bottomLeft: _postsBottomLeft,
-                      bottomRight: _postsBottomRight
-                  )
-              ),
-              //! The list of posts from the database
-              child: StreamBuilder<QuerySnapshot>(
-                //! creates the connection to the posts branch
-                stream: FirebaseFirestore.instance.collection('posts').snapshots(),
-                builder: (context, snapshot){
-                  if(!snapshot.hasData) return Center();
-                  //! if there are posts in the database
-                  //! create a ListView that is filled with Cards
-                  return ListView.builder(
-                      itemCount: snapshot.data.docs.length,
-                      itemBuilder: (context, index){
-                        //! doc is the individual Post from the database
-                        final doc = snapshot.data.docs[index];
-                        return Card(
-                            child: CustomListTile(
-                              height: windowHeight*0.1,
-                              color: Colors.white.withOpacity(_postsOpacity),
-                              profileImage: Container(decoration: const BoxDecoration(color: Colors.pink)),
-                              name: doc['name'],
-                              bloodType: doc['bloodtype'],
-                              city: doc['hospital'],
-                              date: doc['date'],
-                            )
+                        borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(25),
+                            topRight: Radius.circular(25),
+                            bottomLeft: _postsBottomLeft,
+                            bottomRight: _postsBottomRight
+                        )
+                    ),
+                    //! The list of posts from the database
+
+                    //! Blurs the post page when a Post description is opened
+                    child: StreamBuilder<QuerySnapshot>(
+                      //! creates the connection to the posts branch
+                      stream: FirebaseFirestore.instance.collection('posts').snapshots(),
+                      builder: (context, snapshot){
+                        if(!snapshot.hasData) return Center();
+                        //! if there are posts in the database
+                        //! create a ListView that is filled with Cards
+                        return ListView.builder(
+                            itemCount: snapshot.data.docs.length,
+                            itemBuilder: (context, index){
+                              //! doc is the individual Post from the database
+                              final doc = snapshot.data.docs[index];
+                              return Card(
+                                  child: CustomListTile(
+                                    height: windowHeight*0.1,
+                                    color: Colors.white,
+                                    profileImage: Container(decoration: const BoxDecoration(color: Colors.pink)),
+                                    name: doc['name'],
+                                    bloodType: doc['bloodtype'],
+                                    city: doc['hospital'],
+                                    date: doc['date'],
+                                    onTap: (){
+                                      setState(() {
+                                        //? Set the opening screen with the custom information about the related post
+                                        _postAuthor = doc['name'];
+                                        _postHospital = doc['hospital'];
+                                        _postBloodType = doc['bloodtype'];
+                                        _postDate = doc['date'];
+                                        _postDescription = doc['description'];
+                                        _postExpirationDate = doc['expiration-date'];
+
+                                        _pageState = 3;
+
+                                      });
+                                    },
+                                  )
+                              );
+                            }
                         );
-                      }
-                  );
-                },
+                      },
+                    ),
+                  ),
 
-              ),
-            ),
+                //! Creates a blur effect when a Card is selected
+                Positioned(
+                  width: _blurWidth,
+                  height: _blurHeight,
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                    child: Container(
+                        color: Colors.black.withOpacity(0.0)
+                    ),
+                  ),
+                ),
+              ]
+          ),
 
           //! Create post page
           AnimatedContainer(
@@ -425,7 +527,162 @@ class HomeState extends State<Home> {
                   ),
               ]
           )
-      )
+      ),
+
+          //! Post description
+          AnimatedContainer(
+            duration: Duration(milliseconds: 800),
+            curve: Curves.fastLinearToSlowEaseIn,
+            transform: Matrix4.translationValues(_postXOffset, _postYOffset, 1),
+            width: windowWidth,
+            height: _postPageHeight,
+
+            child: Transform.scale(
+              scale: 1,
+              child: Container(
+                decoration: BoxDecoration(
+                    color: Colors.red[700],
+                    borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(45),
+                        bottomRight: Radius.circular(45)
+                    )
+                ),
+                child: Column(
+                  children: [
+                    //! Space
+                    Expanded(child: Text(''), flex:10),
+                    //! Details
+                    Expanded(
+
+                      /*
+                      Details container has as its child a Column widget
+                      inside it, children are rows with text.
+                      Each text has 4 elements:
+                        - left space
+                        - name tag
+                        - the text from database
+                        - right space
+                       */
+
+                      flex: 20,
+                      child: Container(
+                        //! 90% of the screen width
+                        width: windowWidth - windowWidth/10,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            Row(
+                              children: [
+                                //! Space
+                                Expanded(child: Text(''), flex: 1),
+                                Expanded(child: Text('Name', style: TextStyle(color: Colors.grey[200]),), flex: 5, ),
+                                Expanded(child: Text(_postAuthor), flex: 6),
+                                //! Space
+                                Expanded(child: Text(''), flex: 7)
+                              ],
+                            ),
+                            Row(
+                              children: [
+                                //! Space
+                                Expanded(child: Text(''), flex: 1),
+                                Expanded(child: Text('Blood type', style: TextStyle(color: Colors.grey[200]),), flex: 5),
+                                Expanded(child: Text(_postBloodType), flex: 6),
+                                //! Space
+                                Expanded(child: Text(''), flex: 7)
+                              ],
+                            ),
+                            Row(
+                              children: [
+                                //! Space
+                                Expanded(child: Text(''), flex: 1),
+                                Expanded(child: Text('Hospital', style: TextStyle(color: Colors.grey[200]),), flex: 5),
+                                Expanded(child: Text(_postHospital), flex: 6),
+                                //! Space
+                                Expanded(child: Text(''), flex: 7)
+                              ],
+                            ),
+                            Row(
+                              children: [
+                                //! Space
+                                Expanded(child: Text(''), flex: 1),
+                                Expanded(child: Text('Expiration', style: TextStyle(color: Colors.grey[200]),), flex: 5),
+                                Expanded(child: Text(_postExpirationDate), flex: 6),
+                                //! Space
+                                Expanded(child: Text(''), flex: 7)
+                              ],
+                            ),
+
+                          ],
+                        ),
+                      ),
+                    ),
+                    //! Space
+                    Expanded(child: Text(''), flex: 5,),
+                    //! Description
+                    Expanded(
+                      flex: 50,
+                      child: Container(
+                        //! 90% of window width
+                        width: windowWidth - windowWidth/10,
+                        padding: EdgeInsets.all(windowWidth/40),
+                        child: SingleChildScrollView(
+                            scrollDirection: Axis.vertical,
+                            child: Text(_postDescription)
+                        ),
+                        decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20)
+                        ),
+                      ),
+                    ),
+                    //! Space
+                    Expanded(child: Text(''), flex: 5,),
+                    //! Buttons of the page
+                    Expanded(
+                        flex: 10,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            OutlineButton(
+                              onPressed: (){
+                                setState(() {
+                                  _pageState = 0;
+                                });
+                              },
+                              width: windowWidth/4,
+                              height: windowHeight/20,
+                              text: 'back',
+                              color: Colors.white,
+                              textColor: Colors.black,
+                              borderColor: Colors.white,
+                            ),
+                            OutlineButton(
+                              onPressed: (){},
+
+                              width: windowWidth/4,
+                              height: windowHeight/20,
+                              text: 'Join',
+                              color: Colors.white,
+                              textColor: Colors.black,
+                              borderColor: Colors.white,
+                            ),
+
+                          ],
+                        )
+                    ),
+
+
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+
       ]
     )
     );
@@ -442,6 +699,7 @@ class CustomListTile extends StatelessWidget{
   final String date;
   final double height;
   final Color color;
+  final Function onTap;
 
   CustomListTile({
     Key key,
@@ -451,74 +709,78 @@ class CustomListTile extends StatelessWidget{
     this.city,
     this.date,
     this.height,
-    this.color
-}) : super(key: key);
+    this.color,
+    this.onTap
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Material(
-        elevation: 5,
-        shadowColor: Colors.grey,
-        color: color,
+      elevation: 5,
+      shadowColor: Colors.grey,
+      color: color,
+      child: GestureDetector(
+        onTap: onTap,
         child: Container(
-          child: Padding(
-            padding: EdgeInsets.all(10.0),
-            child: SizedBox(
+            child: Padding(
+              padding: EdgeInsets.all(10.0),
+              child: SizedBox(
                 height: height,
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                  //! The card is separated in 3 parts: 1 + 2 + 2 space
-                  //! The profile image of the user
-                  Expanded(
-                    flex: 1,
-                    child: profileImage,
-                  ),
-                  //! Column with name and the city of the user
-                  Expanded(
-                    flex: 2,
-                    child: Column(
-                      children: [
-                        //! Margin between the top of the box and the name
-                        Expanded(child: Text(""), flex: 1,),
-                        Expanded(
-                            flex: 3,
-                            child: Text(name)
-                        ),
-                        Flexible(
-                          flex: 3,
-                          child: Container(
-                              padding: EdgeInsets.only(left: 10),
-                              child: Text(
-                                  city,
-                                  overflow: TextOverflow.ellipsis,
+                    //! The card is separated in 3 parts: 1 + 2 + 2 space
+                    //! The profile image of the user
+                    Expanded(
+                      flex: 1,
+                      child: profileImage,
+                    ),
+                    //! Column with name and the city of the user
+                    Expanded(
+                      flex: 2,
+                      child: Column(
+                        children: [
+                          //! Margin between the top of the box and the name
+                          Expanded(child: Text(""), flex: 1,),
+                          Expanded(
+                              flex: 3,
+                              child: Text(name)
+                          ),
+                          Flexible(
+                              flex: 3,
+                              child: Container(
+                                  padding: EdgeInsets.only(left: 10),
+                                  child: Text(
+                                    city,
+                                    overflow: TextOverflow.ellipsis,
+                                  )
                               )
-                          )
-                        ),
-                      ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  //! Column with the blood type and the date
-                  Expanded(
-                    flex: 2,
-                    child: Column(
-                      children: [
-                        Expanded(child: Text(""), flex: 1,),
-                        Expanded(
-                            flex: 3,
-                            child: Text(bloodType)
-                        ),
-                        Expanded(
-                            flex: 3,
-                            child: Text(date))
-                      ],
+                    //! Column with the blood type and the date
+                    Expanded(
+                      flex: 2,
+                      child: Column(
+                        children: [
+                          Expanded(child: Text(""), flex: 1,),
+                          Expanded(
+                              flex: 3,
+                              child: Text(bloodType)
+                          ),
+                          Expanded(
+                              flex: 3,
+                              child: Text(date))
+                        ],
+                      ),
                     ),
-                  )
-                ],
+                  ],
+                ),
               ),
-              ),
-        )
-      )
+            )
+        ),
+      ),
     );
   }
 
