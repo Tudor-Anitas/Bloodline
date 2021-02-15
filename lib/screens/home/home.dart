@@ -1,8 +1,13 @@
+
 import 'dart:ui';
 
 import 'package:BloodLine/services/auth.dart';
 import 'package:BloodLine/services/database.dart';
+import 'package:BloodLine/services/notifications.dart';
+import 'package:animations/animations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../Post.dart';
@@ -17,13 +22,30 @@ class Home extends StatefulWidget{
 
 class HomeState extends State<Home> {
 
-  List<Post> posts = [
-    Post(Container(decoration: const BoxDecoration(color: Colors.pink)),
-  'Tudor Anitas', 'AB+', 'Baia Mare', '25.03.2021', "some description here for this patient"),
-    Post(Container(decoration: const BoxDecoration(color: Colors.blue)),
-        'Tudor Anitas', 'AB+', 'Baia Mare', '25.03.2021', "again some description poor bastard")
-  ];
+  final FirebaseMessaging firebaseMessaging = FirebaseMessaging();
 
+
+  @override
+  void initState() {
+    super.initState();
+
+    //? Request permissions for iOS and web
+    firebaseMessaging.requestNotificationPermissions(
+      IosNotificationSettings()
+    );
+    //? Used for foreground messages
+    firebaseMessaging.configure(
+      onMessage: (Map<String, dynamic> message) async{
+        print("on Message");
+        final snackbar = SnackBar(
+          content: Text(message['notification']['title']),
+        );
+        _scaffoldKey.currentState.showSnackBar(snackbar);
+      },
+
+    );
+
+  }
 
   int _pageState = 0; // decides if it is a welcome, login or register
   var _backgroundColor = Colors.white; // changes the background color of a state widget
@@ -60,7 +82,8 @@ class HomeState extends State<Home> {
   String _postExpirationDate = '';
   String _postHospital = '';
   String _postAuthor = '';
-
+  String _postCity = '';
+  String _postAuthorDeviceToken = '';
 
   Color _postColor = Colors.white;
 
@@ -69,6 +92,10 @@ class HomeState extends State<Home> {
 
   DateTime _dateTime;
   String expirationDateText = 'Expiration date';
+
+  //? Stores the key of the main scaffold of the main page,
+  //? Used to display snackbars
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   Widget build(BuildContext context) {
@@ -152,6 +179,7 @@ class HomeState extends State<Home> {
 
     return Scaffold(
       resizeToAvoidBottomPadding: false,
+      key: _scaffoldKey,
 
       body: Stack(
         children: [
@@ -294,30 +322,242 @@ class HomeState extends State<Home> {
                             itemBuilder: (context, index){
                               //! doc is the individual Post from the database
                               final doc = snapshot.data.docs[index];
-                              return Card(
-                                  child: CustomListTile(
-                                    height: windowHeight*0.1,
+                              return OpenContainer(
+                                transitionDuration: Duration(milliseconds: 500),
+                                closedBuilder: (context, showDetails) {
+                                  return Card(
+                                      child: CustomListTile(
+                                        height: windowHeight * 0.1,
+                                        color: Colors.white,
+                                        profileImage: Container(
+                                            decoration: BoxDecoration(
+                                                borderRadius: BorderRadius.circular(70),
+                                                color: Colors.blueAccent
+                                            )
+                                        ),
+                                        name: doc['name'],
+                                        bloodType: doc['bloodtype'],
+                                        city: doc['hospital'],
+                                        date: doc['date'],
+                                        onTap: () {
+                                          //? Set the opening screen with the custom information about the related post
+                                          _postAuthor = doc['name'];
+                                          _postHospital = doc['hospital'];
+                                          _postBloodType = doc['bloodtype'];
+                                          _postDate = doc['date'];
+                                          _postDescription = doc['description'];
+                                          _postExpirationDate = doc['expiration-date'];
+                                          _postAuthorDeviceToken = doc['device-token'];
+                                        },
+                                      )
+                                  );
+                                },
+                                openBuilder: (context, showCard){
+                                  //? Set the opening screen with the custom information about the related post
+                                  _postAuthor = doc['name'];
+                                  _postHospital = doc['hospital'];
+                                  _postBloodType = doc['bloodtype'];
+                                  _postDate = doc['date'];
+                                  _postDescription = doc['description'];
+                                  _postExpirationDate = doc['expiration-date'];
+                                  _postAuthorDeviceToken = doc['device-token'];
+                                  return Container(
                                     color: Colors.white,
-                                    profileImage: Container(decoration: const BoxDecoration(color: Colors.pink)),
-                                    name: doc['name'],
-                                    bloodType: doc['bloodtype'],
-                                    city: doc['hospital'],
-                                    date: doc['date'],
-                                    onTap: (){
-                                      setState(() {
-                                        //? Set the opening screen with the custom information about the related post
-                                        _postAuthor = doc['name'];
-                                        _postHospital = doc['hospital'];
-                                        _postBloodType = doc['bloodtype'];
-                                        _postDate = doc['date'];
-                                        _postDescription = doc['description'];
-                                        _postExpirationDate = doc['expiration-date'];
+                                    child: Column(
+                                      children: [
+                                        //! Profile picture with Author name
+                                        Expanded(
+                                          flex: 25,
+                                          child: Container(
+                                            color: Colors.white,
+                                            padding: EdgeInsets.only(top: windowHeight/25),
+                                            child: Row(
+                                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                              children: [
+                                                Container(
+                                                    width: 80,
+                                                    height: 80,
+                                                    decoration: BoxDecoration(
+                                                      borderRadius: BorderRadius.circular(70),
+                                                      color: Colors.blueAccent,
+                                                    )
+                                                ),
+                                                Text(_postAuthor)
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                        //! Post details with description
+                                        Expanded(
+                                          flex: 75,
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                                borderRadius: BorderRadius.only(topRight: Radius.circular(20), topLeft: Radius.circular(20) ),
+                                                border: Border.all(width: 2, color: Colors.grey[200]),
+                                                color: Color(0xffF0F1FF)
+                                            ),
+                                            child: Column(
+                                              children: [
+                                                //! Top space
+                                                Expanded(flex: 5, child: Text('')),
+                                                //! Bloodtype
+                                                //! Hospital
+                                                //! City
+                                                //! Expiration
+                                                //! It has a Row with 2 Columns, one with the type of information and one with user info
+                                                Expanded(
+                                                  flex: 25,
+                                                  child: Row(
+                                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                    children: [
+                                                      //! Info types
+                                                      Column(
+                                                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                        children: [
+                                                          Container(
+                                                              width: windowWidth/5,
+                                                              child: Row(
+                                                                mainAxisAlignment: MainAxisAlignment.start,
+                                                                children: [
+                                                                  Text('Blood type'),
+                                                                ],
+                                                              )),
+                                                          Container(
+                                                              width: windowWidth/5,
+                                                              child: Row(
+                                                                mainAxisAlignment: MainAxisAlignment.start,
+                                                                children: [
+                                                                  Text('Hospital'),
+                                                                ],
+                                                              )),
+                                                          Container(
+                                                              width: windowWidth/5,
+                                                              child: Row(
+                                                                mainAxisAlignment: MainAxisAlignment.start,
+                                                                children: [
+                                                                  Text('City'),
+                                                                ],
+                                                              )),
+                                                          Container(
+                                                              width: windowWidth/5,
+                                                              child: Row(
+                                                                mainAxisAlignment: MainAxisAlignment.start,
+                                                                children: [
+                                                                  Text('Expiration'),
+                                                                ],
+                                                              )),
+                                                        ],
+                                                      ),
+                                                      //! User info
+                                                      Column(
+                                                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                        children: [
+                                                          Container(
+                                                              width: windowWidth/5,
+                                                              child: Row(
+                                                                mainAxisAlignment: MainAxisAlignment.start,
+                                                                children: [
+                                                                  Text(_postBloodType),
+                                                                ],
+                                                              )),
+                                                          Container(
+                                                              width: windowWidth/5,
+                                                              child: Row(
+                                                                mainAxisAlignment: MainAxisAlignment.start,
+                                                                children: [
+                                                                  Text(_postHospital),
+                                                                ],
+                                                              )),
+                                                          Container(
+                                                              width: windowWidth/5,
+                                                              child: Row(
+                                                                mainAxisAlignment: MainAxisAlignment.start,
+                                                                children: [
+                                                                  Text(_postCity),
+                                                                ],
+                                                              )),
+                                                          Container(
+                                                              width: windowWidth/5,
+                                                              child: Row(
+                                                                mainAxisAlignment: MainAxisAlignment.start,
+                                                                children: [
+                                                                  Text(_postExpirationDate),
+                                                                ],
+                                                              )),
+                                                        ],
+                                                      )
+                                                    ],
+                                                  ),
+                                                ),
+                                                //! Space between details and description
+                                                Expanded(flex: 5, child: Text('')),
+                                                //! Description
+                                                Expanded(
+                                                  flex: 65,
+                                                  child: Container(
+                                                    //! 90% of window width
+                                                    width: windowWidth - windowWidth/10,
+                                                    padding: EdgeInsets.all(windowWidth/40),
+                                                    child: SingleChildScrollView(
+                                                        scrollDirection: Axis.vertical,
+                                                        child: Text(_postDescription)
+                                                    ),
+                                                    decoration: BoxDecoration(
+                                                        color: Colors.white,
+                                                        borderRadius: BorderRadius.circular(10)
+                                                    ),
+                                                  ),
+                                                ),
+                                                //! Space between description and buttons
+                                                Expanded(flex: 5, child: Text('')),
+                                                //! Buttons
+                                                Expanded(
+                                                    flex: 10,
+                                                    child: Row(
+                                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                      children: [
+                                                        //! Back button
+                                                        OutlineButton(
+                                                          onPressed: (){
+                                                            setState(() {
+                                                              showCard();
+                                                            });
+                                                          },
+                                                          width: windowWidth/4,
+                                                          height: windowHeight/20,
+                                                          text: 'back',
+                                                          color: Colors.white,
+                                                          textColor: Colors.black,
+                                                          borderColor: Colors.red[800],
+                                                        ),
+                                                        //! Join button
+                                                        OutlineButton(
+                                                          onPressed: (){
+                                                            print(_postAuthorDeviceToken);
+                                                            NotificationService().sendJoinNotification(_postAuthorDeviceToken);
+                                                          },
+                                                          width: windowWidth/3.5,
+                                                          height: windowHeight/18,
+                                                          text: 'Join',
+                                                          color: Colors.red[800],
+                                                          textColor: Colors.black,
+                                                          borderColor: Colors.white,
+                                                        ),
 
-                                        _pageState = 3;
+                                                      ],
+                                                    )
+                                                ),
+                                                //! Space between buttons and bottom
+                                                Expanded(flex: 5, child: Text('')),
+                                              ],
+                                            ),
+                                          ),
+                                        )
+                                      ],
+                                    ),
+                                  );
+                                },
 
-                                      });
-                                    },
-                                  )
                               );
                             }
                         );
@@ -325,17 +565,6 @@ class HomeState extends State<Home> {
                     ),
                   ),
 
-                //! Creates a blur effect when a Card is selected
-                Positioned(
-                  width: _blurWidth,
-                  height: _blurHeight,
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                    child: Container(
-                        color: Colors.black.withOpacity(0.0)
-                    ),
-                  ),
-                ),
               ]
           ),
 
@@ -479,6 +708,7 @@ class HomeState extends State<Home> {
                               textColor: Colors.grey[300],
                               borderColor: Colors.red[800],
                               onPressed: () async{
+
                                 //! get the user from the session
                                 User user = FirebaseAuth.instance.currentUser;
                                 //! get the user details from the database
@@ -489,30 +719,48 @@ class HomeState extends State<Home> {
                                 String expirationDateFormat = DateFormat("dd.MM.yyyy").format(_dateTime);
                                 String postDate = DateFormat("dd.MM.yyyy").format(DateTime.now());
 
+                                String hospital = hospitalController.text;
+                                String description = descriptionController.text;
+
                                 //! add the post to the user history
                                 try {
-                                  DatabaseService().addPostToUser(
-                                      userDetails['name'],
-                                      userDetails['bloodtype'],
-                                      hospitalController.text,
-                                      postDate,
-                                      expirationDateFormat,
-                                      descriptionController.text,
-                                      user.uid);
+                                  FirebaseMessaging().getToken().then((token) => {
+                                      DatabaseService().addPostToUser(
+                                        userDetails['name'],
+                                        userDetails['bloodtype'],
+                                        hospital,
+                                        postDate,
+                                        expirationDateFormat,
+                                        description,
+                                        user.uid,
+                                        token
+                                      )
+                                  });
 
-                                  //! adds the post to the general user posts branch
-                                  DatabaseService().addPost(
-                                      userDetails['name'],
-                                      userDetails['bloodtype'],
-                                      hospitalController.text,
-                                      postDate,
-                                      expirationDateFormat,
-                                      descriptionController.text,
-                                      user.uid);
+                                  // //! adds the post to the general user posts branch
+                                  FirebaseMessaging().getToken().then((token) => {
+                                      DatabaseService().addPost(
+                                        userDetails['name'],
+                                        userDetails['bloodtype'],
+                                        hospital,
+                                        postDate,
+                                        expirationDateFormat,
+                                        description,
+                                        user.uid,
+                                        token
+                                      )
+                                  });
+
                                 } on FirebaseException catch(e){
                                   print(e.message);
                                 }
                                 setState(()  {
+                                  final snackbar = SnackBar(
+                                    content: Text('Post created!'),
+                                    duration: Duration(seconds: 2),
+                                  );
+                                  _scaffoldKey.currentState.showSnackBar(snackbar);
+
                                   hospitalController.clear();
                                   descriptionController.clear();
                                   _pageState = 0;
@@ -529,158 +777,161 @@ class HomeState extends State<Home> {
           )
       ),
 
-          //! Post description
-          AnimatedContainer(
-            duration: Duration(milliseconds: 800),
-            curve: Curves.fastLinearToSlowEaseIn,
-            transform: Matrix4.translationValues(_postXOffset, _postYOffset, 1),
-            width: windowWidth,
-            height: _postPageHeight,
-
-            child: Transform.scale(
-              scale: 1,
-              child: Container(
-                decoration: BoxDecoration(
-                    color: Colors.red[700],
-                    borderRadius: BorderRadius.only(
-                        bottomLeft: Radius.circular(45),
-                        bottomRight: Radius.circular(45)
-                    )
-                ),
-                child: Column(
-                  children: [
-                    //! Space
-                    Expanded(child: Text(''), flex:10),
-                    //! Details
-                    Expanded(
-
-                      /*
-                      Details container has as its child a Column widget
-                      inside it, children are rows with text.
-                      Each text has 4 elements:
-                        - left space
-                        - name tag
-                        - the text from database
-                        - right space
-                       */
-
-                      flex: 20,
-                      child: Container(
-                        //! 90% of the screen width
-                        width: windowWidth - windowWidth/10,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            Row(
-                              children: [
-                                //! Space
-                                Expanded(child: Text(''), flex: 1),
-                                Expanded(child: Text('Name', style: TextStyle(color: Colors.grey[200]),), flex: 5, ),
-                                Expanded(child: Text(_postAuthor), flex: 6),
-                                //! Space
-                                Expanded(child: Text(''), flex: 7)
-                              ],
-                            ),
-                            Row(
-                              children: [
-                                //! Space
-                                Expanded(child: Text(''), flex: 1),
-                                Expanded(child: Text('Blood type', style: TextStyle(color: Colors.grey[200]),), flex: 5),
-                                Expanded(child: Text(_postBloodType), flex: 6),
-                                //! Space
-                                Expanded(child: Text(''), flex: 7)
-                              ],
-                            ),
-                            Row(
-                              children: [
-                                //! Space
-                                Expanded(child: Text(''), flex: 1),
-                                Expanded(child: Text('Hospital', style: TextStyle(color: Colors.grey[200]),), flex: 5),
-                                Expanded(child: Text(_postHospital), flex: 6),
-                                //! Space
-                                Expanded(child: Text(''), flex: 7)
-                              ],
-                            ),
-                            Row(
-                              children: [
-                                //! Space
-                                Expanded(child: Text(''), flex: 1),
-                                Expanded(child: Text('Expiration', style: TextStyle(color: Colors.grey[200]),), flex: 5),
-                                Expanded(child: Text(_postExpirationDate), flex: 6),
-                                //! Space
-                                Expanded(child: Text(''), flex: 7)
-                              ],
-                            ),
-
-                          ],
-                        ),
-                      ),
-                    ),
-                    //! Space
-                    Expanded(child: Text(''), flex: 5,),
-                    //! Description
-                    Expanded(
-                      flex: 50,
-                      child: Container(
-                        //! 90% of window width
-                        width: windowWidth - windowWidth/10,
-                        padding: EdgeInsets.all(windowWidth/40),
-                        child: SingleChildScrollView(
-                            scrollDirection: Axis.vertical,
-                            child: Text(_postDescription)
-                        ),
-                        decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(20)
-                        ),
-                      ),
-                    ),
-                    //! Space
-                    Expanded(child: Text(''), flex: 5,),
-                    //! Buttons of the page
-                    Expanded(
-                        flex: 10,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            OutlineButton(
-                              onPressed: (){
-                                setState(() {
-                                  _pageState = 0;
-                                });
-                              },
-                              width: windowWidth/4,
-                              height: windowHeight/20,
-                              text: 'back',
-                              color: Colors.white,
-                              textColor: Colors.black,
-                              borderColor: Colors.white,
-                            ),
-                            OutlineButton(
-                              onPressed: (){},
-
-                              width: windowWidth/4,
-                              height: windowHeight/20,
-                              text: 'Join',
-                              color: Colors.white,
-                              textColor: Colors.black,
-                              borderColor: Colors.white,
-                            ),
-
-                          ],
-                        )
-                    ),
-
-
-                  ],
-                ),
-              ),
-            ),
-          ),
+          // //! Post description
+          // AnimatedContainer(
+          //   duration: Duration(milliseconds: 800),
+          //   curve: Curves.fastLinearToSlowEaseIn,
+          //   transform: Matrix4.translationValues(_postXOffset, _postYOffset, 1),
+          //   width: windowWidth,
+          //   height: _postPageHeight,
+          //
+          //   child: Transform.scale(
+          //     scale: 1,
+          //     child: Container(
+          //       decoration: BoxDecoration(
+          //           color: Colors.red[700],
+          //           borderRadius: BorderRadius.only(
+          //               bottomLeft: Radius.circular(15),
+          //               bottomRight: Radius.circular(15)
+          //           )
+          //       ),
+          //       child: Column(
+          //         children: [
+          //           //! Space
+          //           Expanded(child: Text(''), flex:10),
+          //           //! Details
+          //           Expanded(
+          //
+          //             /*
+          //             Details container has as its child a Column widget
+          //             inside it, children are rows with text.
+          //             Each text has 4 elements:
+          //               - left space
+          //               - name tag
+          //               - the text from database
+          //               - right space
+          //              */
+          //
+          //             flex: 20,
+          //             child: Container(
+          //               //! 90% of the screen width
+          //               width: windowWidth - windowWidth/10,
+          //               decoration: BoxDecoration(
+          //                 borderRadius: BorderRadius.circular(20),
+          //               ),
+          //               child: Column(
+          //                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          //                 children: [
+          //                   Row(
+          //                     children: [
+          //                       //! Space
+          //                       Expanded(child: Text(''), flex: 1),
+          //                       Expanded(child: Text('Name', style: TextStyle(color: Colors.grey[200]),), flex: 5, ),
+          //                       Expanded(child: Text(_postAuthor), flex: 6),
+          //                       //! Space
+          //                       Expanded(child: Text(''), flex: 7)
+          //                     ],
+          //                   ),
+          //                   Row(
+          //                     children: [
+          //                       //! Space
+          //                       Expanded(child: Text(''), flex: 1),
+          //                       Expanded(child: Text('Blood type', style: TextStyle(color: Colors.grey[200]),), flex: 5),
+          //                       Expanded(child: Text(_postBloodType), flex: 6),
+          //                       //! Space
+          //                       Expanded(child: Text(''), flex: 7)
+          //                     ],
+          //                   ),
+          //                   Row(
+          //                     children: [
+          //                       //! Space
+          //                       Expanded(child: Text(''), flex: 1),
+          //                       Expanded(child: Text('Hospital', style: TextStyle(color: Colors.grey[200]),), flex: 5),
+          //                       Expanded(child: Text(_postHospital), flex: 6),
+          //                       //! Space
+          //                       Expanded(child: Text(''), flex: 7)
+          //                     ],
+          //                   ),
+          //                   Row(
+          //                     children: [
+          //                       //! Space
+          //                       Expanded(child: Text(''), flex: 1),
+          //                       Expanded(child: Text('Expiration', style: TextStyle(color: Colors.grey[200]),), flex: 5),
+          //                       Expanded(child: Text(_postExpirationDate), flex: 6),
+          //                       //! Space
+          //                       Expanded(child: Text(''), flex: 7)
+          //                     ],
+          //                   ),
+          //
+          //                 ],
+          //               ),
+          //             ),
+          //           ),
+          //           //! Space
+          //           Expanded(child: Text(''), flex: 5,),
+          //           //! Description
+          //           Expanded(
+          //             flex: 50,
+          //             child: Container(
+          //               //! 90% of window width
+          //               width: windowWidth - windowWidth/10,
+          //               padding: EdgeInsets.all(windowWidth/40),
+          //               child: SingleChildScrollView(
+          //                   scrollDirection: Axis.vertical,
+          //                   child: Text(_postDescription)
+          //               ),
+          //               decoration: BoxDecoration(
+          //                   color: Colors.white,
+          //                   borderRadius: BorderRadius.circular(10)
+          //               ),
+          //             ),
+          //           ),
+          //           //! Space
+          //           Expanded(child: Text(''), flex: 5,),
+          //           //! Buttons of the page
+          //           Expanded(
+          //               flex: 10,
+          //               child: Row(
+          //                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          //                 children: [
+          //                   //! Back button
+          //                   OutlineButton(
+          //                     onPressed: (){
+          //                       setState(() {
+          //                         _pageState = 0;
+          //                       });
+          //                     },
+          //                     width: windowWidth/4,
+          //                     height: windowHeight/20,
+          //                     text: 'back',
+          //                     color: Colors.white,
+          //                     textColor: Colors.black,
+          //                     borderColor: Colors.white,
+          //                   ),
+          //                   //! Join button
+          //                   OutlineButton(
+          //                     onPressed: (){
+          //                       NotificationService().sendJoinNotification(_postAuthorDeviceToken);
+          //                     },
+          //
+          //                     width: windowWidth/4,
+          //                     height: windowHeight/20,
+          //                     text: 'Join',
+          //                     color: Colors.white,
+          //                     textColor: Colors.black,
+          //                     borderColor: Colors.white,
+          //                   ),
+          //
+          //                 ],
+          //               )
+          //           ),
+          //
+          //
+          //         ],
+          //       ),
+          //     ),
+          //   ),
+          // ),
 
 
       ]
@@ -688,6 +939,8 @@ class HomeState extends State<Home> {
     );
   }
 }
+
+
 
 //? the custom card which is used for created posts
 class CustomListTile extends StatelessWidget{

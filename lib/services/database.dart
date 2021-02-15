@@ -8,33 +8,41 @@ class DatabaseService{
   // collection reference
   final CollectionReference userDataCollection = FirebaseFirestore.instance.collection('users');
   final CollectionReference userPosts = FirebaseFirestore.instance.collection('posts');
-  Future updateUserData(String name, String bloodtype, String uid) async{
+  Future updateUserData(String name, String bloodtype, String uid, String token, String email) async{
     return await userDataCollection.doc(uid).set({
       'name': name,
       'bloodtype': bloodtype,
+      'deviceToken' : token,
+      'email' : email
     });
   }
   //? Adds the created post into the user's collection
-  Future addPostToUser(String name, String bloodtype, String hospital, String date, String expirationDate, String description, String uid) async{
+  Future addPostToUser(String name, String bloodtype, String hospital, String date, String expirationDate, String description, String uid, String deviceToken) async{
+    print(description);
     return await userDataCollection.doc(uid).collection('posts').add({
       'name': name,
       'bloodtype': bloodtype,
       'hospital': hospital,
       'date': date,
       'expiration-date': expirationDate,
-      'description': description
+      'description': description,
+      'user-id': uid,
+      'device-token': deviceToken
     });
   }
 
   //? Adds the post into the general collection
-  Future addPost(String name, String bloodtype, String hospital, String date, String expirationDate, String description, String uid) async{
+  Future addPost(String name, String bloodtype, String hospital, String date, String expirationDate, String description, String uid, String deviceToken) async{
+    print(description);
     return await userPosts.doc().set({
       'name': name,
       'bloodtype': bloodtype,
       'hospital': hospital,
       'date': date,
       'expiration-date': expirationDate,
-      'description': description
+      'description': description,
+      'user-id': uid,
+      'device-token': deviceToken
     });
   }
 

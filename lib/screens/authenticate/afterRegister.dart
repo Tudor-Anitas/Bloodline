@@ -2,6 +2,7 @@ import 'package:BloodLine/screens/splash/loadingScreen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:BloodLine/screens/home/home.dart';
 import 'package:BloodLine/services/auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:BloodLine/screens/authenticate/authenticate.dart';
@@ -12,8 +13,6 @@ class Details extends StatefulWidget{
 }
 
 class _DetailsState extends State<Details>{
-
-
 
   //? Controllers for text input
   TextEditingController nameController = TextEditingController();
@@ -110,9 +109,14 @@ class _DetailsState extends State<Details>{
                     buttonText: 'Done!',
                     color: Colors.black,
                     onPressed: (){
-                      AuthService(FirebaseAuth.instance).updateNameAndBloodType(
-                          nameController.text.trim(),
-                          bloodtypeValue);
+                      FirebaseMessaging().getToken().then((token) => {
+                          AuthService(FirebaseAuth.instance).updateNameAndBloodType(
+                              nameController.text.trim(),
+                              bloodtypeValue,
+                              token
+                          )
+                      });
+
                       Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Loading()));
                     },
                   ),

@@ -1,11 +1,12 @@
 import 'package:BloodLine/services/database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 
 class AuthService{
   final FirebaseAuth _auth;
-
   AuthService(this._auth);
+
 
   Stream<User> get authStateChanges => _auth.authStateChanges();
 
@@ -34,13 +35,11 @@ class AuthService{
     }
   }
 
-  Future updateNameAndBloodType(String name, String bloodtype) async{
+  Future updateNameAndBloodType(String name, String bloodtype, String token) async{
     //? Put the user details into the firestore
     User user = _auth.currentUser;
-    await DatabaseService().updateUserData(name, bloodtype , user.uid);
+
+    await DatabaseService().updateUserData(name, bloodtype , user.uid, token, user.email);
   }
-  String getUID(){
-    User user = _auth.currentUser;
-    return user.uid;
-  }
+
 }

@@ -1,6 +1,7 @@
-
+import 'package:animations/animations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+
 
 class Testpage extends StatefulWidget{
 
@@ -32,7 +33,7 @@ class _TestpageState extends State<Testpage> {
   String _postExpirationDate = '';
   String _postHospital = '';
   String _postAuthor = '';
-
+  String _postCity = '';
 
 
 
@@ -79,27 +80,8 @@ class _TestpageState extends State<Testpage> {
     return Scaffold(
       body: Stack(
         children: [
-          //! The posts page
-          AnimatedContainer(
-            curve: Curves.fastLinearToSlowEaseIn,
-            duration: Duration(
-                milliseconds: 700
-            ),
-            transform: Matrix4.translationValues(_postsXOffset, _postsYOffset, 1),
-            width: windowWidth,
-            height: windowHeight,
-            decoration: BoxDecoration(
-                color: Colors.white.withOpacity(_postsOpacity),
-
-                borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(25),
-                    topRight: Radius.circular(25),
-                    bottomLeft: _postsBottomLeft,
-                    bottomRight: _postsBottomRight
-                )
-            ),
-            //! The list of posts from the database
-            child: StreamBuilder<QuerySnapshot>(
+            //! The posts page
+            StreamBuilder<QuerySnapshot>(
               //! creates the connection to the posts branch
               stream: FirebaseFirestore.instance.collection('posts').snapshots(),
               builder: (context, snapshot){
@@ -111,64 +93,245 @@ class _TestpageState extends State<Testpage> {
                     itemBuilder: (context, index){
                       //! doc is the individual Post from the database
                       final doc = snapshot.data.docs[index];
-                      return Card(
-                          child: CustomListTile(
-                            height: windowHeight*0.1,
-                            color: Colors.white,
-                            profileImage: Container(decoration: const BoxDecoration(color: Colors.pink)),
-                            name: doc['name'],
-                            bloodType: doc['bloodtype'],
-                            city: doc['hospital'],
-                            date: doc['date'],
-                            onTap: (){
-                              setState(() {
-                                //? Set the opening screen with the custom information about the related post
-                                _postAuthor = doc['name'];
-                                _postHospital = doc['hospital'];
-                                _postBloodType = doc['bloodtype'];
-                                _postDate = doc['date'];
-                                _postDescription = doc['description'];
-                                _postExpirationDate = doc['expiration-date'];
+                      return OpenContainer(
+                        transitionDuration: Duration(milliseconds: 500),
+                          closedBuilder: (context, showDetails) {
+                            return Card(
+                                child: CustomListTile(
+                                  height: windowHeight * 0.1,
+                                  color: Colors.white,
+                                  profileImage: Container(
+                                      decoration: const BoxDecoration(
+                                          color: Colors.blueAccent)),
+                                  name: doc['name'],
+                                  bloodType: doc['bloodtype'],
+                                  city: doc['hospital'],
+                                  date: doc['date'],
+                                  onTap: () {
+                                    //? Set the opening screen with the custom information about the related post
+                                    _postAuthor = doc['name'];
+                                    _postHospital = doc['hospital'];
+                                    _postBloodType = doc['bloodtype'];
+                                    _postDate = doc['date'];
+                                    _postDescription = doc['description'];
+                                    _postExpirationDate =
+                                    doc['expiration-date'];
+                                  },
+                                )
+                            );
+                          },
+                        openBuilder: (context, showCard){
+                            //? Set the opening screen with the custom information about the related post
+                            _postAuthor = doc['name'];
+                            _postHospital = doc['hospital'];
+                            _postBloodType = doc['bloodtype'];
+                            _postDate = doc['date'];
+                            _postDescription = doc['description'];
+                            _postExpirationDate =
+                            doc['expiration-date'];
+                            return Container(
+                              color: Colors.white,
+                              child: Column(
+                                children: [
+                                  //! Profile picture with Author name
+                                  Expanded(
+                                    flex: 25,
+                                    child: Container(
+                                      color: Colors.white,
+                                      padding: EdgeInsets.only(top: windowHeight/25),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                        children: [
+                                          Container(
+                                              width: 80,
+                                              height: 80,
+                                              decoration: BoxDecoration(
+                                                  borderRadius: BorderRadius.circular(70),
+                                                  color: Colors.blueAccent,
+                                              )
+                                          ),
+                                          Text(_postAuthor)
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  //! Post details with description
+                                  Expanded(
+                                    flex: 75,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.only(topRight: Radius.circular(20), topLeft: Radius.circular(20) ),
+                                          border: Border.all(width: 2, color: Colors.grey[200]),
+                                          color: Color(0xffF0F1FF)
+                                      ),
+                                      child: Column(
+                                        children: [
+                                          //! Top space
+                                          Expanded(flex: 5, child: Text('')),
+                                          //! Bloodtype
+                                          //! Hospital
+                                          //! City
+                                          //! Expiration
+                                          //! It has a Row with 2 Columns, one with the type of information and one with user info
+                                          Expanded(
+                                            flex: 25,
+                                            child: Row(
+                                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                              children: [
+                                                //! Info types
+                                                Column(
+                                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                  children: [
+                                                    Container(
+                                                        width: windowWidth/5,
+                                                        child: Row(
+                                                          mainAxisAlignment: MainAxisAlignment.start,
+                                                          children: [
+                                                            Text('Blood type'),
+                                                          ],
+                                                        )),
+                                                    Container(
+                                                        width: windowWidth/5,
+                                                        child: Row(
+                                                          mainAxisAlignment: MainAxisAlignment.start,
+                                                          children: [
+                                                            Text('Hospital'),
+                                                          ],
+                                                        )),
+                                                    Container(
+                                                        width: windowWidth/5,
+                                                        child: Row(
+                                                          mainAxisAlignment: MainAxisAlignment.start,
+                                                          children: [
+                                                            Text('City'),
+                                                          ],
+                                                        )),
+                                                    Container(
+                                                        width: windowWidth/5,
+                                                        child: Row(
+                                                          mainAxisAlignment: MainAxisAlignment.start,
+                                                          children: [
+                                                            Text('Expiration'),
+                                                          ],
+                                                        )),
+                                                  ],
+                                                ),
+                                                //! User info
+                                                Column(
+                                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                  children: [
+                                                    Container(
+                                                        width: windowWidth/5,
+                                                        child: Row(
+                                                          mainAxisAlignment: MainAxisAlignment.start,
+                                                          children: [
+                                                            Text(_postBloodType),
+                                                          ],
+                                                        )),
+                                                    Container(
+                                                        width: windowWidth/5,
+                                                        child: Row(
+                                                          mainAxisAlignment: MainAxisAlignment.start,
+                                                          children: [
+                                                            Text(_postHospital),
+                                                          ],
+                                                        )),
+                                                    Container(
+                                                        width: windowWidth/5,
+                                                        child: Row(
+                                                          mainAxisAlignment: MainAxisAlignment.start,
+                                                          children: [
+                                                            Text(_postCity),
+                                                          ],
+                                                        )),
+                                                    Container(
+                                                        width: windowWidth/5,
+                                                        child: Row(
+                                                          mainAxisAlignment: MainAxisAlignment.start,
+                                                          children: [
+                                                            Text(_postExpirationDate),
+                                                          ],
+                                                        )),
+                                                  ],
+                                                )
+                                              ],
+                                            ),
+                                          ),
+                                          //! Space between details and description
+                                          Expanded(flex: 5, child: Text('')),
+                                          //! Description
+                                          Expanded(
+                                            flex: 65,
+                                            child: Container(
+                                              //! 90% of window width
+                                              width: windowWidth - windowWidth/10,
+                                              padding: EdgeInsets.all(windowWidth/40),
+                                              child: SingleChildScrollView(
+                                                  scrollDirection: Axis.vertical,
+                                                  child: Text(_postDescription)
+                                              ),
+                                              decoration: BoxDecoration(
+                                                  color: Colors.white,
+                                                  borderRadius: BorderRadius.circular(10)
+                                              ),
+                                            ),
+                                          ),
+                                          //! Space between description and buttons
+                                          Expanded(flex: 5, child: Text('')),
+                                          //! Buttons
+                                          Expanded(
+                                              flex: 10,
+                                              child: Row(
+                                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                children: [
+                                                  //! Back button
+                                                  OutlineButton(
+                                                    onPressed: (){
+                                                      setState(() {
+                                                        showCard();
+                                                      });
+                                                    },
+                                                    width: windowWidth/4,
+                                                    height: windowHeight/20,
+                                                    text: 'back',
+                                                    color: Colors.white,
+                                                    textColor: Colors.black,
+                                                    borderColor: Colors.red[800],
+                                                  ),
+                                                  //! Join button
+                                                  OutlineButton(
+                                                    onPressed: (){
 
-                                _pageState = 1;
+                                                    },
+                                                    width: windowWidth/3.5,
+                                                    height: windowHeight/18,
+                                                    text: 'Join',
+                                                    color: Colors.red[800],
+                                                    textColor: Colors.black,
+                                                    borderColor: Colors.white,
+                                                  ),
 
-                              });
-                            },
-                          )
+                                                ],
+                                              )
+                                          ),
+                                          //! Space between buttons and bottom
+                                          Expanded(flex: 5, child: Text('')),
+                                        ],
+                                      ),
+                                    ),
+                                  )
+                                ],
+                              ),
+                            );
+                        },
+
                       );
                     }
                 );
               },
             ),
-          ),
-          AnimatedContainer(
-              duration: Duration(milliseconds: 600),
-              curve: Curves.bounceOut,
-              transform: Matrix4.translationValues(_postXOffset, _postYOffset, 1),
-              width: windowWidth,
-              height: _postPageHeight,
 
-              child: Transform.scale(
-                scale: 1,
-                child: Container(
-                  decoration: BoxDecoration(
-                      color: Colors.blue,
-                      borderRadius: BorderRadius.only(
-                          bottomLeft: Radius.circular(45),
-                          bottomRight: Radius.circular(45)
-                      )
-                  ),
-                  child: FlatButton(
-                    onPressed: (){
-                      setState(() {
-                        _pageState = 0;
-                      });
-                    },
-                    child: Text('back'),
-                  ),
-                ),
-              ),
-          )
+
         ],
       ),
 
@@ -176,9 +339,6 @@ class _TestpageState extends State<Testpage> {
 
   }
 }
-
-
-
 
 //? the custom card which is used for created posts
 class CustomListTile extends StatelessWidget{
@@ -275,4 +435,63 @@ class CustomListTile extends StatelessWidget{
     );
   }
 
+}
+
+//? classes for contrast, secondary buttons
+class OutlineButton extends StatefulWidget{
+  String text; // what text to display inside the button
+  Color color = Colors.black; // what color should be inside that button
+  Color textColor = Colors.white;
+  Color borderColor = Colors.black;
+  double fontSize;
+  double width;
+  double height;
+  final Function onPressed;
+  OutlineButton({
+    this.text,
+    this.color,
+    this.textColor,
+    this.borderColor,
+    this.width,
+    this.height,
+    this.fontSize,
+    this.onPressed
+  });
+
+
+  @override
+  _OutlineButtonState createState() => _OutlineButtonState();
+
+}
+class _OutlineButtonState extends State<OutlineButton>{
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: widget.width,
+      height: widget.height,
+      decoration: BoxDecoration(
+          border: Border.all(
+              color: widget.borderColor,
+              width: 2
+          ),
+          color: widget.color,
+          borderRadius: BorderRadius.circular(8)
+      ),
+      padding: EdgeInsets.all(2),
+      child: Center(
+        child: FlatButton(
+          onPressed: widget.onPressed,
+          highlightColor: Colors.red[700],
+          child: Text(
+            widget.text,
+            style: TextStyle(
+                color: widget.textColor,
+                fontSize: widget.fontSize
+            ),
+          ),
+        ),
+      ),
+
+    );
+  }
 }
