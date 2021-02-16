@@ -42,6 +42,7 @@ class HomeState extends State<Home> {
         );
         _scaffoldKey.currentState.showSnackBar(snackbar);
       },
+      onBackgroundMessage: _onBackgroundMessage
 
     );
 
@@ -940,6 +941,10 @@ class HomeState extends State<Home> {
   }
 }
 
+Future<dynamic> _onBackgroundMessage(Map<String, dynamic> message) async {
+  debugPrint('On background message $message');
+  return Future<void>.value();
+}
 
 
 //? the custom card which is used for created posts
