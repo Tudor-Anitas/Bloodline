@@ -1,3 +1,4 @@
+import 'package:BloodLine/services/database.dart';
 import 'package:animations/animations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -75,9 +76,20 @@ class _TestpageState extends State<Testpage> {
         _postYOffset = 0;
         break;
     }
-
+    final snackbar1 = SnackBar(content: Text('You already joined this cause!'));
+    final _scaffoldKey = GlobalKey<ScaffoldState>();
 
     return Scaffold(
+      key: _scaffoldKey,
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+
+          if(await DatabaseService().isAlreadyJoined('1RAKGpoRWSMQgJFLKomTNqEngVy2', 'bHC2AB18u6uK1N7BRLEF')){
+            _scaffoldKey.currentState.showSnackBar(snackbar1);
+          }
+        },
+        
+      ),
       body: Stack(
         children: [
             //! The posts page
@@ -330,8 +342,6 @@ class _TestpageState extends State<Testpage> {
                 );
               },
             ),
-
-
         ],
       ),
 

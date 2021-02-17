@@ -10,7 +10,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../Post.dart';
 import 'package:intl/intl.dart';
 
 import '../../test.dart';
@@ -49,7 +48,6 @@ class HomeState extends State<Home> {
   }
 
   int _pageState = 0; // decides if it is a welcome, login or register
-  var _backgroundColor = Colors.white; // changes the background color of a state widget
   double windowWidth = 0; // the width of the screen
   double windowHeight = 0; // the height of the screen
 
@@ -61,32 +59,21 @@ class HomeState extends State<Home> {
   Radius _postsBottomLeft = Radius.circular(0);
   Radius _postsBottomRight = Radius.circular(0);
 
-  //? Blur screen size
-  double _blurWidth = 0;
-  double _blurHeight = 0;
-
   double _createPostHeight = 0;
   double _createPostWidth = 0;
   double _createPostXOffset = 0;
   double _createPostYOffset = 0;
 
-
-  //? To be added to the home page
-  double _postPageHeight = 0;
-  double _postPageWidth = 0;
-  double _postXOffset = 0;
-  double _postYOffset = 0;
   // Fields that change dynamically when a Post button is pressed
   String _postBloodType = '';
-  String _postDate = '';
   String _postDescription = '';
   String _postExpirationDate = '';
   String _postHospital = '';
   String _postAuthor = '';
   String _postCity = '';
+  String _postDate = '';
+  String _postPeopleJoined = '0';
   String _postAuthorDeviceToken = '';
-
-  Color _postColor = Colors.white;
 
   TextEditingController hospitalController = new TextEditingController();
   TextEditingController descriptionController = new TextEditingController();
@@ -105,8 +92,6 @@ class HomeState extends State<Home> {
     windowHeight = MediaQuery.of(context).size.height;
     windowWidth = MediaQuery.of(context).size.width;
 
-
-    
     switch(_pageState){
 
       case 0: //? The posts menu
@@ -115,8 +100,7 @@ class HomeState extends State<Home> {
         _postsWidth = windowWidth;
         _postsXOffset = 0;
         _postsYOffset = windowHeight/5;
-        _blurWidth = 0;
-        _blurHeight = 0;
+
         _postsOpacity = 1;
         _postsBottomLeft = Radius.circular(0);
         _postsBottomRight = Radius.circular(0);
@@ -127,8 +111,6 @@ class HomeState extends State<Home> {
         _createPostXOffset = 0;
         _createPostYOffset = windowHeight;
 
-        //? Rule for the Post description
-        _postPageHeight = 0;
         break;
       case 1: //? Create Post
 
@@ -163,17 +145,6 @@ class HomeState extends State<Home> {
         _createPostWidth = windowWidth;
         _createPostXOffset = 0;
         _createPostYOffset = windowHeight;
-        break;
-      case 3: //? Post Description
-
-        //? Opens the Post Description page
-         _postPageHeight = windowHeight/1.4;
-
-        _postXOffset = 0;
-        _postYOffset = 0;
-
-        _blurWidth = 5;
-        _blurHeight = 5;
         break;
     }
 
@@ -325,6 +296,9 @@ class HomeState extends State<Home> {
                               final doc = snapshot.data.docs[index];
                               return OpenContainer(
                                 transitionDuration: Duration(milliseconds: 500),
+                                //
+                                //! The card view seen in the list builder
+                                //
                                 closedBuilder: (context, showDetails) {
                                   return Card(
                                       child: CustomListTile(
@@ -342,17 +316,21 @@ class HomeState extends State<Home> {
                                         date: doc['date'],
                                         onTap: () {
                                           //? Set the opening screen with the custom information about the related post
-                                          _postAuthor = doc['name'];
-                                          _postHospital = doc['hospital'];
-                                          _postBloodType = doc['bloodtype'];
-                                          _postDate = doc['date'];
-                                          _postDescription = doc['description'];
-                                          _postExpirationDate = doc['expiration-date'];
-                                          _postAuthorDeviceToken = doc['device-token'];
+                                          // _postAuthor = doc['name'];
+                                          // _postHospital = doc['hospital'];
+                                          // _postBloodType = doc['bloodtype'];
+                                          // _postDate = doc['date'];
+                                          // _postDescription = doc['description'];
+                                          // _postExpirationDate = doc['expiration-date'];
+                                          // _postAuthorDeviceToken = doc['device-token'];
+                                          //_postPeopleJoined = doc['people-joined'];
                                         },
                                       )
                                   );
                                 },
+                                //
+                                //! The open view with post description
+                                //
                                 openBuilder: (context, showCard){
                                   //? Set the opening screen with the custom information about the related post
                                   _postAuthor = doc['name'];
@@ -362,6 +340,10 @@ class HomeState extends State<Home> {
                                   _postDescription = doc['description'];
                                   _postExpirationDate = doc['expiration-date'];
                                   _postAuthorDeviceToken = doc['device-token'];
+                                  FirebaseFirestore.instance.collection('posts').doc(doc.id).collection('people-joined').get().then(
+                                            (QuerySnapshot snapshot) => {_postPeopleJoined =  snapshot.docs.length.toString()}
+                                            );
+
                                   return Container(
                                     color: Colors.white,
                                     child: Column(
@@ -400,14 +382,14 @@ class HomeState extends State<Home> {
                                             child: Column(
                                               children: [
                                                 //! Top space
-                                                Expanded(flex: 5, child: Text('')),
+                                                Expanded(flex: 3, child: Text('')),
                                                 //! Bloodtype
                                                 //! Hospital
                                                 //! City
                                                 //! Expiration
                                                 //! It has a Row with 2 Columns, one with the type of information and one with user info
                                                 Expanded(
-                                                  flex: 25,
+                                                  flex: 27,
                                                   child: Row(
                                                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                                     children: [
@@ -437,6 +419,14 @@ class HomeState extends State<Home> {
                                                                 mainAxisAlignment: MainAxisAlignment.start,
                                                                 children: [
                                                                   Text('City'),
+                                                                ],
+                                                              )),
+                                                          Container(
+                                                              width: windowWidth/5,
+                                                              child: Row(
+                                                                mainAxisAlignment: MainAxisAlignment.start,
+                                                                children: [
+                                                                  Text('Joined'),
                                                                 ],
                                                               )),
                                                           Container(
@@ -482,6 +472,14 @@ class HomeState extends State<Home> {
                                                               child: Row(
                                                                 mainAxisAlignment: MainAxisAlignment.start,
                                                                 children: [
+                                                                  Text(_postPeopleJoined),
+                                                                ],
+                                                              )),
+                                                          Container(
+                                                              width: windowWidth/5,
+                                                              child: Row(
+                                                                mainAxisAlignment: MainAxisAlignment.start,
+                                                                children: [
                                                                   Text(_postExpirationDate),
                                                                 ],
                                                               )),
@@ -491,10 +489,10 @@ class HomeState extends State<Home> {
                                                   ),
                                                 ),
                                                 //! Space between details and description
-                                                Expanded(flex: 5, child: Text('')),
+                                                Expanded(flex: 3, child: Text('')),
                                                 //! Description
                                                 Expanded(
-                                                  flex: 65,
+                                                  flex: 67,
                                                   child: Container(
                                                     //! 90% of window width
                                                     width: windowWidth - windowWidth/10,
@@ -526,23 +524,46 @@ class HomeState extends State<Home> {
                                                           },
                                                           width: windowWidth/4,
                                                           height: windowHeight/20,
-                                                          text: 'back',
-                                                          color: Colors.white,
+                                                          text: 'Back',
+                                                          color: Color(0xffF0F1FF),
                                                           textColor: Colors.black,
-                                                          borderColor: Colors.red[800],
+                                                          borderColor: Color(0xFF9dd9d2),
                                                         ),
                                                         //! Join button
                                                         OutlineButton(
-                                                          onPressed: (){
-                                                            print(_postAuthorDeviceToken);
-                                                            NotificationService().sendJoinNotification(_postAuthorDeviceToken);
+                                                          onPressed: () async {
+                                                            User user = FirebaseAuth.instance.currentUser;
+
+                                                            //! If the user tries to join his own post, a snackbar will appear with a warning
+                                                            //! Else if the user is already joined in a post, a snackbar will appear with a warning
+                                                            if(user.uid == doc['user-id']) {
+                                                              //! Close the post description
+                                                              showCard();
+                                                              //! Show the warning
+                                                              final snackbar = SnackBar(
+                                                                content: Text('You cannot join your own post'),
+                                                                duration: Duration(seconds: 2),
+                                                              );
+                                                              _scaffoldKey.currentState.showSnackBar(snackbar);
+                                                              //! If the user already joined
+                                                            } else if(await DatabaseService().isAlreadyJoined(user.uid, doc.id)){
+                                                                //! Close the post description
+                                                                showCard();
+                                                                final snackbar = SnackBar(content: Text('You already joined in this cause'));
+                                                                _scaffoldKey.currentState.showSnackBar(snackbar);
+                                                            } else{
+                                                              //! Add the user to the joined people
+                                                              DatabaseService().addPeopleToPost(user.uid, doc.id);
+                                                              //! Send a notification to the author of the post regarding joining his cause
+                                                              NotificationService().sendJoinNotification(_postAuthorDeviceToken);
+                                                            }
                                                           },
                                                           width: windowWidth/3.5,
                                                           height: windowHeight/18,
                                                           text: 'Join',
-                                                          color: Colors.red[800],
+                                                          color: Color(0xFF9dd9d2),
                                                           textColor: Colors.black,
-                                                          borderColor: Colors.white,
+                                                          borderColor: Color(0xFF9dd9d2),
                                                         ),
 
                                                       ],
@@ -777,164 +798,6 @@ class HomeState extends State<Home> {
               ]
           )
       ),
-
-          // //! Post description
-          // AnimatedContainer(
-          //   duration: Duration(milliseconds: 800),
-          //   curve: Curves.fastLinearToSlowEaseIn,
-          //   transform: Matrix4.translationValues(_postXOffset, _postYOffset, 1),
-          //   width: windowWidth,
-          //   height: _postPageHeight,
-          //
-          //   child: Transform.scale(
-          //     scale: 1,
-          //     child: Container(
-          //       decoration: BoxDecoration(
-          //           color: Colors.red[700],
-          //           borderRadius: BorderRadius.only(
-          //               bottomLeft: Radius.circular(15),
-          //               bottomRight: Radius.circular(15)
-          //           )
-          //       ),
-          //       child: Column(
-          //         children: [
-          //           //! Space
-          //           Expanded(child: Text(''), flex:10),
-          //           //! Details
-          //           Expanded(
-          //
-          //             /*
-          //             Details container has as its child a Column widget
-          //             inside it, children are rows with text.
-          //             Each text has 4 elements:
-          //               - left space
-          //               - name tag
-          //               - the text from database
-          //               - right space
-          //              */
-          //
-          //             flex: 20,
-          //             child: Container(
-          //               //! 90% of the screen width
-          //               width: windowWidth - windowWidth/10,
-          //               decoration: BoxDecoration(
-          //                 borderRadius: BorderRadius.circular(20),
-          //               ),
-          //               child: Column(
-          //                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          //                 children: [
-          //                   Row(
-          //                     children: [
-          //                       //! Space
-          //                       Expanded(child: Text(''), flex: 1),
-          //                       Expanded(child: Text('Name', style: TextStyle(color: Colors.grey[200]),), flex: 5, ),
-          //                       Expanded(child: Text(_postAuthor), flex: 6),
-          //                       //! Space
-          //                       Expanded(child: Text(''), flex: 7)
-          //                     ],
-          //                   ),
-          //                   Row(
-          //                     children: [
-          //                       //! Space
-          //                       Expanded(child: Text(''), flex: 1),
-          //                       Expanded(child: Text('Blood type', style: TextStyle(color: Colors.grey[200]),), flex: 5),
-          //                       Expanded(child: Text(_postBloodType), flex: 6),
-          //                       //! Space
-          //                       Expanded(child: Text(''), flex: 7)
-          //                     ],
-          //                   ),
-          //                   Row(
-          //                     children: [
-          //                       //! Space
-          //                       Expanded(child: Text(''), flex: 1),
-          //                       Expanded(child: Text('Hospital', style: TextStyle(color: Colors.grey[200]),), flex: 5),
-          //                       Expanded(child: Text(_postHospital), flex: 6),
-          //                       //! Space
-          //                       Expanded(child: Text(''), flex: 7)
-          //                     ],
-          //                   ),
-          //                   Row(
-          //                     children: [
-          //                       //! Space
-          //                       Expanded(child: Text(''), flex: 1),
-          //                       Expanded(child: Text('Expiration', style: TextStyle(color: Colors.grey[200]),), flex: 5),
-          //                       Expanded(child: Text(_postExpirationDate), flex: 6),
-          //                       //! Space
-          //                       Expanded(child: Text(''), flex: 7)
-          //                     ],
-          //                   ),
-          //
-          //                 ],
-          //               ),
-          //             ),
-          //           ),
-          //           //! Space
-          //           Expanded(child: Text(''), flex: 5,),
-          //           //! Description
-          //           Expanded(
-          //             flex: 50,
-          //             child: Container(
-          //               //! 90% of window width
-          //               width: windowWidth - windowWidth/10,
-          //               padding: EdgeInsets.all(windowWidth/40),
-          //               child: SingleChildScrollView(
-          //                   scrollDirection: Axis.vertical,
-          //                   child: Text(_postDescription)
-          //               ),
-          //               decoration: BoxDecoration(
-          //                   color: Colors.white,
-          //                   borderRadius: BorderRadius.circular(10)
-          //               ),
-          //             ),
-          //           ),
-          //           //! Space
-          //           Expanded(child: Text(''), flex: 5,),
-          //           //! Buttons of the page
-          //           Expanded(
-          //               flex: 10,
-          //               child: Row(
-          //                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          //                 children: [
-          //                   //! Back button
-          //                   OutlineButton(
-          //                     onPressed: (){
-          //                       setState(() {
-          //                         _pageState = 0;
-          //                       });
-          //                     },
-          //                     width: windowWidth/4,
-          //                     height: windowHeight/20,
-          //                     text: 'back',
-          //                     color: Colors.white,
-          //                     textColor: Colors.black,
-          //                     borderColor: Colors.white,
-          //                   ),
-          //                   //! Join button
-          //                   OutlineButton(
-          //                     onPressed: (){
-          //                       NotificationService().sendJoinNotification(_postAuthorDeviceToken);
-          //                     },
-          //
-          //                     width: windowWidth/4,
-          //                     height: windowHeight/20,
-          //                     text: 'Join',
-          //                     color: Colors.white,
-          //                     textColor: Colors.black,
-          //                     borderColor: Colors.white,
-          //                   ),
-          //
-          //                 ],
-          //               )
-          //           ),
-          //
-          //
-          //         ],
-          //       ),
-          //     ),
-          //   ),
-          // ),
-
-
       ]
     )
     );
@@ -1145,7 +1008,7 @@ class _OutlineButtonState extends State<OutlineButton>{
               width: 2
           ),
           color: widget.color,
-          borderRadius: BorderRadius.circular(50)
+          borderRadius: BorderRadius.circular(10)
       ),
       padding: EdgeInsets.all(2),
       child: Center(
