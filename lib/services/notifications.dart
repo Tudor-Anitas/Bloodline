@@ -1,6 +1,7 @@
 
 import 'dart:async';
 import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:http/http.dart' as http;
@@ -12,12 +13,9 @@ class NotificationService {
   //? The key of the Firebase Cloud Messaging server to redirect the notifications
   String serverKey = 'AAAAFBD7AGw:APA91bF3bPDQmuwmopguTprh5l2YOuS6UUFlviBzHGNVPE9_gtfZ3xRbTUvjuJT0S_G6MtCvXjjts795usqFH2CM5_Q1o8uxrHBOuQxPDH2OJwLfZn3DV95VxJq9A7DhhQPsPuHl1sjK';
 
-  /**
-   *! Sends a http request at the Firebase Cloud Messaging API to display a notification
-   *! on the targeted device through token
-   */
+  /// Sends a http request at the Firebase Cloud Messaging API to display a notification
+  /// on the targeted device through token
   Future<Map<String, dynamic>> sendJoinNotification(String token) async{
-    print('Join message sent');
     await http.post(
       'https://fcm.googleapis.com/fcm/send',
       headers: <String, String>{
@@ -40,7 +38,6 @@ class NotificationService {
         }
       )
     );
-    print("After http post");
     final Completer<Map<String, dynamic>> completer = Completer<Map<String, dynamic>>();
 
     _firebaseMessaging.configure(
@@ -52,8 +49,93 @@ class NotificationService {
     return completer.future;
   }
 
+  /// Get all users that have the specified bloodtype and are in the same city
+  /// if there isn't any user in the same city, it will go to the global posts that every user can see
+  /// Iterate through the list and send a notification to all of them
+  Future<Map<String, dynamic>> sendSimilarBloodJoinNotification(String bloodtype) async{
+
+    String blood = "";
+    switch (bloodtype) {
+      case 'O+':
+        blood = 'Opos';
+        break;
+      case 'O-':
+        blood = 'Oneg';
+        break;
+      case 'A+':
+        blood = 'Apos';
+        break;
+      case 'A-':
+        blood = 'Aneg';
+        break;
+      case 'B+':
+        blood = 'Bpos';
+        break;
+      case 'B-':
+        blood = 'Bneg';
+        break;
+      case 'AB+':
+        blood = 'ABpos';
+        break;
+      case 'AB-':
+        blood = 'ABneg';
+        break;
+    }
+    print(blood);
+    String toParams = '/topics/' + blood;
+
+    final response = await http.post(
+        'https://fcm.googleapis.com/fcm/send',
+        headers: <String, String>{
+          'Content-Type': 'application/json',
+          'Authorization': 'key=$serverKey'
+        },
+        body: jsonEncode(
+            <String, dynamic>{
+              'notification': <String, dynamic>{
+                'body': 'New Transfusion Needed!',
+                'title': 'Someone with your blood type needs your help'
+              },
+              'priority': 'high',
+              'data': <String, dynamic>{
+                'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+                'id': '1',
+                'status': 'done'
+              },
+              'to': '$toParams'
+            }
+        )
+
+    );
+    if(response.statusCode != 200){
+      print("couldn't send the notification");
+    }
+    final Completer<Map<String, dynamic>> completer =
+    Completer<Map<String, dynamic>>();
+
+    _firebaseMessaging.configure(
+      onMessage: (Map<String, dynamic> message) async {
+        completer.complete(message);
+      },
+    );
+
+    return completer.future;
+  }
+
+  Future getAllTopics() async{
+    String token = await FirebaseMessaging().getToken();
+    final response = await http.get(
+        'https://iid.googleapis.com/iid/info/$token?details=true',
+        headers: <String, String>{
+          'Content-Type': 'application/json',
+          'Authorization': 'key=$serverKey'
+        }
+    );
+    print(response.body);
+  }
 
 }
+
 
 
 

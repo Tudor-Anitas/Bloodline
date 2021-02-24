@@ -1,6 +1,9 @@
 import 'package:BloodLine/services/database.dart';
+import 'package:BloodLine/services/notifications.dart';
 import 'package:animations/animations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 
 
@@ -83,10 +86,10 @@ class _TestpageState extends State<Testpage> {
       key: _scaffoldKey,
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
+          FirebaseAuth auth = FirebaseAuth.instance;
 
-          if(await DatabaseService().isAlreadyJoined('1RAKGpoRWSMQgJFLKomTNqEngVy2', 'bHC2AB18u6uK1N7BRLEF')){
-            _scaffoldKey.currentState.showSnackBar(snackbar1);
-          }
+          //FirebaseMessaging().subscribeToTopic('Opos');
+          DatabaseService().userExists(auth.currentUser.email);
         },
         
       ),

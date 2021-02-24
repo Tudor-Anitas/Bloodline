@@ -1,11 +1,13 @@
 import 'package:BloodLine/screens/home/home.dart';
+import 'package:BloodLine/screens/splash/loadingScreen.dart';
 import 'package:BloodLine/services/auth.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:keyboard_visibility/keyboard_visibility.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:BloodLine/screens/authenticate/afterRegister.dart';
-
+import 'package:google_sign_in/google_sign_in.dart';
 
 class LoginPage extends StatefulWidget{
   @override
@@ -40,6 +42,8 @@ class LoginPageState extends State<LoginPage>{
   var signInPassword = TextEditingController();
   var signUpEmail = TextEditingController();
   var signUpPassword = TextEditingController();
+
+  FirebaseAuth _auth;
 
   List<String> headlines = ["Text here", "Login", "Register"];
 
@@ -229,7 +233,7 @@ class LoginPageState extends State<LoginPage>{
           ),
         ),
 
-          // login page
+          //! login page
           AnimatedContainer(
             padding: EdgeInsets.all(32),
             height: _loginHeight,
@@ -291,7 +295,37 @@ class LoginPageState extends State<LoginPage>{
                   ),
                 ),
                 //! Empty space
-                Expanded(child: Text(''), flex: 65,),
+                Expanded(
+                  flex: 5,
+                  child: Text(''),
+                ),
+                //! Google and Fb icons
+                Expanded(
+                  flex: 20,
+                  child: Row(
+                    children: [
+                      IconButton(
+                          icon: Icon(Icons.details),
+                          onPressed: () async {
+                            try{
+                              if(await AuthService(_auth).signInWithGoogle()){
+                                Navigator.pushReplacement(context,
+                                    MaterialPageRoute(builder: (context) => Loading()));
+                              }else{
+                                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>Details()));
+                              }
+
+                            }
+                            catch(e){
+                              print(e);
+                            }
+                        },
+                      )
+                    ],
+                  ),
+                ),
+                //! Empty space
+                Expanded(child: Text(''), flex: 40,),
                 //! Login button
                 Expanded(
                 flex: 40,
@@ -347,7 +381,7 @@ class LoginPageState extends State<LoginPage>{
           ),
         ),
 
-          // register page
+          //! register page
           AnimatedContainer(
           height: _registerHeight,
           padding: EdgeInsets.all(32),

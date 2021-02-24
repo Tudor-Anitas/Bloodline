@@ -1,6 +1,4 @@
-
 import 'dart:ui';
-
 import 'package:BloodLine/services/auth.dart';
 import 'package:BloodLine/services/database.dart';
 import 'package:BloodLine/services/notifications.dart';
@@ -8,10 +6,11 @@ import 'package:animations/animations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
-
+import 'package:BloodLine/screens/authenticate/authenticate.dart';
 import '../../test.dart';
 
 class Home extends StatefulWidget{
@@ -42,9 +41,10 @@ class HomeState extends State<Home> {
         _scaffoldKey.currentState.showSnackBar(snackbar);
       },
       onBackgroundMessage: _onBackgroundMessage
-
     );
 
+    //! Deletes all expired posts from the database
+    DatabaseService().removeExpiredPosts();
   }
 
   int _pageState = 0; // decides if it is a welcome, login or register
@@ -74,6 +74,7 @@ class HomeState extends State<Home> {
   String _postDate = '';
   String _postPeopleJoined = '0';
   String _postAuthorDeviceToken = '';
+
 
   TextEditingController hospitalController = new TextEditingController();
   TextEditingController descriptionController = new TextEditingController();
@@ -286,7 +287,19 @@ class HomeState extends State<Home> {
                       //! creates the connection to the posts branch
                       stream: FirebaseFirestore.instance.collection('posts').snapshots(),
                       builder: (context, snapshot){
-                        if(!snapshot.hasData) return Center();
+                        if(!snapshot.hasData || snapshot.data.docs.length == 0) {
+                          return Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.apartment_sharp,
+                                size: windowWidth/10,
+                                color: Colors.grey,
+                              ),
+                              Text('There are no calls yet!')
+                            ],
+                          );
+                        }
                         //! if there are posts in the database
                         //! create a ListView that is filled with Cards
                         return ListView.builder(
@@ -304,12 +317,15 @@ class HomeState extends State<Home> {
                                       child: CustomListTile(
                                         height: windowHeight * 0.1,
                                         color: Colors.white,
-                                        profileImage: Container(
+                                        profileImage: doc['user-image']==""?
+                                            Container(
                                             decoration: BoxDecoration(
                                                 borderRadius: BorderRadius.circular(70),
                                                 color: Colors.blueAccent
-                                            )
-                                        ),
+                                                )
+                                            ) :
+                                            Image.network(doc['user-image']),
+
                                         name: doc['name'],
                                         bloodType: doc['bloodtype'],
                                         city: doc['hospital'],
@@ -357,14 +373,16 @@ class HomeState extends State<Home> {
                                             child: Row(
                                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                               children: [
-                                                Container(
-                                                    width: 80,
-                                                    height: 80,
-                                                    decoration: BoxDecoration(
-                                                      borderRadius: BorderRadius.circular(70),
-                                                      color: Colors.blueAccent,
-                                                    )
-                                                ),
+                                                doc['user-image']==''?
+                                                  Container(
+                                                      width: 80,
+                                                      height: 80,
+                                                      decoration: BoxDecoration(
+                                                        borderRadius: BorderRadius.circular(70),
+                                                        color: Colors.blueAccent,
+                                                      )
+                                                  ) :
+                                                  Image.network(doc['user-image']),
                                                 Text(_postAuthor)
                                               ],
                                             ),
@@ -556,6 +574,10 @@ class HomeState extends State<Home> {
                                                               DatabaseService().addPeopleToPost(user.uid, doc.id);
                                                               //! Send a notification to the author of the post regarding joining his cause
                                                               NotificationService().sendJoinNotification(_postAuthorDeviceToken);
+                                                              //! Close the post and show a snackbar
+                                                              showCard();
+                                                              final snackbar = SnackBar(content: Text('You joined the cause!'),);
+                                                              _scaffoldKey.currentState.showSnackBar(snackbar);
                                                             }
                                                           },
                                                           width: windowWidth/3.5,
@@ -769,9 +791,12 @@ class HomeState extends State<Home> {
                                         expirationDateFormat,
                                         description,
                                         user.uid,
-                                        token
+                                        token,
+                                        user.photoURL
                                       )
                                   });
+                                  //! Send a notification to all users that have the same blood type
+                                  NotificationService().sendSimilarBloodJoinNotification(userDetails['bloodtype']);
 
                                 } on FirebaseException catch(e){
                                   print(e.message);
@@ -908,6 +933,7 @@ class CustomListTile extends StatelessWidget{
 }
 
 //? classes for custom inputs used for creating posts
+// ignore: must_be_immutable
 class CustomInput extends StatefulWidget{
   final String hint;
   final TextEditingController controller;
@@ -971,6 +997,7 @@ class _CustomInputState extends State<CustomInput> {
 
 
 //? classes for contrast, secondary buttons
+// ignore: must_be_immutable
 class OutlineButton extends StatefulWidget{
   String text; // what text to display inside the button
   Color color = Colors.black; // what color should be inside that button

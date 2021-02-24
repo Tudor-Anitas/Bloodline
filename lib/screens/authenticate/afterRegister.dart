@@ -1,4 +1,5 @@
 import 'package:BloodLine/screens/splash/loadingScreen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:BloodLine/screens/home/home.dart';
 import 'package:BloodLine/services/auth.dart';
@@ -17,6 +18,7 @@ class _DetailsState extends State<Details>{
   //? Controllers for text input
   TextEditingController nameController = TextEditingController();
   TextEditingController bloodtypeController = TextEditingController();
+  TextEditingController cityController = TextEditingController();
 
   //? The value shown as the representative in the dropdown
   String bloodtypeValue;
@@ -64,7 +66,7 @@ class _DetailsState extends State<Details>{
               Expanded(child: Text(''), flex: 50,),
               //! Name input
               Expanded(
-                flex: 15,
+                flex: 17,
                 child: Container(
                   margin: EdgeInsets.only(bottom: 20),
                   child: CustomInput(
@@ -72,6 +74,19 @@ class _DetailsState extends State<Details>{
                     hint: 'Name',
                     obscured: false,
                     controller: nameController,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              Expanded(
+                flex: 17,
+                child: Container(
+                  margin: EdgeInsets.only(bottom: 20),
+                  child: CustomInput(
+                    width: windowWidth*0.7,
+                    hint: 'City',
+                    obscured: false,
+                    controller: cityController,
                     color: Colors.white,
                   ),
                 ),
@@ -109,15 +124,56 @@ class _DetailsState extends State<Details>{
                     buttonText: 'Done!',
                     color: Colors.black,
                     onPressed: (){
-                      FirebaseMessaging().getToken().then((token) => {
-                          AuthService(FirebaseAuth.instance).updateNameAndBloodType(
+                      FirebaseAuth _auth = FirebaseAuth.instance;
+                      var user = _auth.currentUser;
+                      if(nameController.text.isEmpty || cityController.text.isEmpty || bloodtypeValue.isEmpty){
+                        print('must implement restriction to user');
+                      } else {
+                        FirebaseMessaging().getToken().then((token) =>
+                        {
+                          AuthService(FirebaseAuth.instance)
+                              .updateNameAndBloodType(
                               nameController.text.trim(),
                               bloodtypeValue,
-                              token
+                              cityController.text.trim(),
+                              token,
+                              user.photoURL
                           )
-                      });
-
-                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Loading()));
+                        });
+                        try {
+                          final String blood = bloodtypeValue;
+                          switch (blood) {
+                            case 'O+':
+                              FirebaseMessaging().subscribeToTopic('Opos');
+                              break;
+                            case 'O-':
+                              FirebaseMessaging().subscribeToTopic('Oneg');
+                              break;
+                            case 'A+':
+                              FirebaseMessaging().subscribeToTopic('Apos');
+                              break;
+                            case 'A-':
+                              FirebaseMessaging().subscribeToTopic('Aneg');
+                              break;
+                            case 'B+':
+                              FirebaseMessaging().subscribeToTopic('Bpos');
+                              break;
+                            case 'B-':
+                              FirebaseMessaging().subscribeToTopic('Bneg');
+                              break;
+                            case 'AB+':
+                              FirebaseMessaging().subscribeToTopic('ABpos');
+                              break;
+                            case 'AB-':
+                              FirebaseMessaging().subscribeToTopic('ABneg');
+                              break;
+                          }
+                        } catch (e) {
+                          print('Error trying to subscribe to topic');
+                        }
+                        Navigator.pushReplacement(context,
+                            MaterialPageRoute(builder: (context) => Loading()));
+                      }
                     },
                   ),
                 ),
@@ -129,5 +185,4 @@ class _DetailsState extends State<Details>{
       ),
     );
   }
-
 }
