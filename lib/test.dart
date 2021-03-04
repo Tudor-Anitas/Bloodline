@@ -1,5 +1,10 @@
+import 'package:BloodLine/services/auth.dart';
 import 'package:BloodLine/services/database.dart';
+import 'package:BloodLine/services/local_notifications.dart';
 import 'package:BloodLine/services/notifications.dart';
+import 'package:BloodLine/widgets/customDialog.dart';
+import 'package:BloodLine/widgets/outlineButton.dart' as outlineButton;
+import 'package:BloodLine/widgets/customListTile.dart';
 import 'package:animations/animations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -87,11 +92,8 @@ class _TestpageState extends State<Testpage> {
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           FirebaseAuth auth = FirebaseAuth.instance;
-
-          //FirebaseMessaging().subscribeToTopic('Opos');
-          DatabaseService().userExists(auth.currentUser.email);
-        },
-        
+          //LocalNotifications().showNotification();
+        }
       ),
       body: Stack(
         children: [
@@ -300,7 +302,7 @@ class _TestpageState extends State<Testpage> {
                                                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                                 children: [
                                                   //! Back button
-                                                  OutlineButton(
+                                                  outlineButton.OutlineButton(
                                                     onPressed: (){
                                                       setState(() {
                                                         showCard();
@@ -314,7 +316,7 @@ class _TestpageState extends State<Testpage> {
                                                     borderColor: Colors.red[800],
                                                   ),
                                                   //! Join button
-                                                  OutlineButton(
+                                                  outlineButton.OutlineButton(
                                                     onPressed: (){
 
                                                     },
@@ -345,166 +347,33 @@ class _TestpageState extends State<Testpage> {
                 );
               },
             ),
+            RaisedButton(
+                onPressed: (){
+                    showGeneralDialog(
+                      context: context,
+                      barrierDismissible: true,
+                      barrierLabel: "",
+                      barrierColor: Colors.black.withOpacity(0.4),
+                      pageBuilder: (BuildContext context, Animation<double> animation, Animation<double> secondaryAnimation){},
+                      transitionDuration: Duration(milliseconds: 700),
+                      transitionBuilder: (context, animation, secondaryAnimation, child){
+                          return ScaleTransition(
+                              scale: CurvedAnimation(
+                                parent: animation,
+                                curve: Curves.elasticOut,
+                                reverseCurve: Curves.easeInOutBack
+                              ),
+                              child: CustomDialog(width: windowWidth, height: windowHeight*0.3,),
+                          );
+                      }
+                    );
+
+                },
+            )
         ],
       ),
 
     );
 
-  }
-}
-
-//? the custom card which is used for created posts
-class CustomListTile extends StatelessWidget{
-
-  final Widget profileImage;
-  final String name;
-  final String bloodType;
-  final String city;
-  final String date;
-  final double height;
-  final Color color;
-  final Function onTap;
-
-  CustomListTile({
-    Key key,
-    this.profileImage,
-    this.name,
-    this.bloodType,
-    this.city,
-    this.date,
-    this.height,
-    this.color,
-    this.onTap
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      elevation: 5,
-      shadowColor: Colors.grey,
-      color: color,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-            child: Padding(
-              padding: EdgeInsets.all(10.0),
-              child: SizedBox(
-                height: height,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    //! The card is separated in 3 parts: 1 + 2 + 2 space
-                    //! The profile image of the user
-                    Expanded(
-                      flex: 1,
-                      child: profileImage,
-                    ),
-                    //! Column with name and the city of the user
-                    Expanded(
-                      flex: 2,
-                      child: Column(
-                        children: [
-                          //! Margin between the top of the box and the name
-                          Expanded(child: Text(""), flex: 1,),
-                          Expanded(
-                              flex: 3,
-                              child: Text(name)
-                          ),
-                          Flexible(
-                              flex: 3,
-                              child: Container(
-                                  padding: EdgeInsets.only(left: 10),
-                                  child: Text(
-                                    city,
-                                    overflow: TextOverflow.ellipsis,
-                                  )
-                              )
-                          ),
-                        ],
-                      ),
-                    ),
-                    //! Column with the blood type and the date
-                    Expanded(
-                      flex: 2,
-                      child: Column(
-                        children: [
-                          Expanded(child: Text(""), flex: 1,),
-                          Expanded(
-                              flex: 3,
-                              child: Text(bloodType)
-                          ),
-                          Expanded(
-                              flex: 3,
-                              child: Text(date))
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            )
-        ),
-      ),
-    );
-  }
-
-}
-
-//? classes for contrast, secondary buttons
-class OutlineButton extends StatefulWidget{
-  String text; // what text to display inside the button
-  Color color = Colors.black; // what color should be inside that button
-  Color textColor = Colors.white;
-  Color borderColor = Colors.black;
-  double fontSize;
-  double width;
-  double height;
-  final Function onPressed;
-  OutlineButton({
-    this.text,
-    this.color,
-    this.textColor,
-    this.borderColor,
-    this.width,
-    this.height,
-    this.fontSize,
-    this.onPressed
-  });
-
-
-  @override
-  _OutlineButtonState createState() => _OutlineButtonState();
-
-}
-class _OutlineButtonState extends State<OutlineButton>{
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: widget.width,
-      height: widget.height,
-      decoration: BoxDecoration(
-          border: Border.all(
-              color: widget.borderColor,
-              width: 2
-          ),
-          color: widget.color,
-          borderRadius: BorderRadius.circular(8)
-      ),
-      padding: EdgeInsets.all(2),
-      child: Center(
-        child: FlatButton(
-          onPressed: widget.onPressed,
-          highlightColor: Colors.red[700],
-          child: Text(
-            widget.text,
-            style: TextStyle(
-                color: widget.textColor,
-                fontSize: widget.fontSize
-            ),
-          ),
-        ),
-      ),
-
-    );
   }
 }

@@ -1,6 +1,8 @@
 import 'package:BloodLine/screens/home/home.dart';
 import 'package:BloodLine/screens/splash/loadingScreen.dart';
 import 'package:BloodLine/services/auth.dart';
+import 'package:BloodLine/widgets/customInput.dart';
+import 'package:BloodLine/widgets/outlineButton.dart' as outlineButton;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:keyboard_visibility/keyboard_visibility.dart';
@@ -304,6 +306,7 @@ class LoginPageState extends State<LoginPage>{
                   flex: 20,
                   child: Row(
                     children: [
+                      //! Google auth
                       IconButton(
                           icon: Icon(Icons.details),
                           onPressed: () async {
@@ -314,11 +317,27 @@ class LoginPageState extends State<LoginPage>{
                               }else{
                                 Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>Details()));
                               }
-
                             }
                             catch(e){
                               print(e);
                             }
+                        },
+                      ),
+                      //! Facebook auth
+                      IconButton(
+                        icon: Icon(Icons.delete),
+                        onPressed: () async{
+                          try{
+                            if(await AuthService(_auth).signInWithFacebook()){
+                            Navigator.pushReplacement(context,
+                                MaterialPageRoute(builder: (context) => Loading()));
+                            }else{
+                              Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>Details()));
+                            }
+                          }
+                          catch(e){
+                            print(e);
+                          }
                         },
                       )
                     ],
@@ -367,7 +386,7 @@ class LoginPageState extends State<LoginPage>{
                     });
 
                   },
-                  child: OutlineButton(
+                  child: outlineButton.OutlineButton(
                     text: "Create New Account",
                     color: Colors.white,
                     textColor: Color(0xff392F5A),
@@ -488,7 +507,7 @@ class LoginPageState extends State<LoginPage>{
                       });
 
                     },
-                    child: OutlineButton(
+                    child: outlineButton.OutlineButton(
                       text: "Back To Login",
                       color: Colors.white,
                       textColor: Color(0xff777777),
@@ -559,55 +578,55 @@ class _PrimaryButtonState extends State<PrimaryButton> {
   }
 }
 
-//? classes for contrast, secondary buttons
-class OutlineButton extends StatefulWidget{
-  String text; // what text to display inside the button
-  Color color = Colors.black; // what color should be inside that button
-  Color textColor = Colors.white;
-  Color borderColor = Colors.black;
-  final Function onPressed;
-  OutlineButton({
-    this.text,
-    this.color,
-    this.textColor,
-    this.borderColor,
-    this.onPressed
-  });
-
-
-  @override
-  _OutlineButtonState createState() => _OutlineButtonState();
-
-}
-class _OutlineButtonState extends State<OutlineButton>{
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-          border: Border.all(
-              color: widget.borderColor,
-              width: 2
-          ),
-          color: widget.color,
-          borderRadius: BorderRadius.circular(50)
-      ),
-      padding: EdgeInsets.all(20),
-      child: Center(
-        child: FlatButton(
-          onPressed: widget.onPressed,
-          child: Text(
-            widget.text,
-            style: TextStyle(
-                color: widget.textColor,
-                fontSize: 16
-            ),
-          ),
-        ),
-      ),
-
-    );
-  }
-}
+// //? classes for contrast, secondary buttons
+// class OutlineButton extends StatefulWidget{
+//   String text; // what text to display inside the button
+//   Color color = Colors.black; // what color should be inside that button
+//   Color textColor = Colors.white;
+//   Color borderColor = Colors.black;
+//   final Function onPressed;
+//   OutlineButton({
+//     this.text,
+//     this.color,
+//     this.textColor,
+//     this.borderColor,
+//     this.onPressed
+//   });
+//
+//
+//   @override
+//   _OutlineButtonState createState() => _OutlineButtonState();
+//
+// }
+// class _OutlineButtonState extends State<OutlineButton>{
+//   @override
+//   Widget build(BuildContext context) {
+//     return Container(
+//       decoration: BoxDecoration(
+//           border: Border.all(
+//               color: widget.borderColor,
+//               width: 2
+//           ),
+//           color: widget.color,
+//           borderRadius: BorderRadius.circular(50)
+//       ),
+//       padding: EdgeInsets.all(20),
+//       child: Center(
+//         child: FlatButton(
+//           onPressed: widget.onPressed,
+//           child: Text(
+//             widget.text,
+//             style: TextStyle(
+//                 color: widget.textColor,
+//                 fontSize: 16
+//             ),
+//           ),
+//         ),
+//       ),
+//
+//     );
+//   }
+// }
 
 //? classes for custom inputs used for login and register
 class InputWithIcon extends StatefulWidget{

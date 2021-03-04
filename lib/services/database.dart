@@ -21,7 +21,7 @@ class DatabaseService{
     });
   }
   
-  /// Adds the created post into the user's collection
+  /// Adds the created post into the author's collection
   Future addPostToUser(String name, String bloodtype, String hospital, String date, String expirationDate, String description, String uid, String deviceToken) async{
     return await userDataCollection.doc(uid).collection('posts').add({
       'name': name,
@@ -37,7 +37,7 @@ class DatabaseService{
   }
 
   /// Adds a [post] to the general collection into the Firestore database
-  Future addPost(String name, String bloodtype, String hospital, String date, String expirationDate, String description, String uid, String deviceToken, String userImage) async{
+  Future addPost(String name, String bloodtype, String hospital, String date, String expirationDate, String description, String city, String uid, String deviceToken, String userImage) async{
     return await userPosts.doc().set({
       'name': name,
       'bloodtype': bloodtype,
@@ -45,6 +45,7 @@ class DatabaseService{
       'date': date,
       'expiration-date': expirationDate,
       'description': description,
+      'city': city,
       'user-id': uid,
       'device-token': deviceToken,
       'people-joined': '',
@@ -80,12 +81,7 @@ class DatabaseService{
     QuerySnapshot snapshot = await userDataCollection.get();
 
     for(var element in snapshot.docs){
-      print(element.data().values.elementAt(0).toString());
-      print(element.data().values.elementAt(1).toString());
-      print(element.data().values.elementAt(2).toString());
-      print(element.data().values.elementAt(3).toString());
-      print(element.data().values.elementAt(4).toString());
-      print("###");
+
       if(element.data().values.elementAt(4).toString() == email)
         return true;
     }
@@ -98,9 +94,11 @@ class DatabaseService{
         .get()
         .then((snapshot){
           for(DocumentSnapshot doc in snapshot.docs){
+            print('posts exist');
             doc.reference.delete();
           }
     });
+    print('posts deleted');
   }
 
 }

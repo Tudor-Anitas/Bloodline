@@ -1,7 +1,12 @@
 import 'dart:ui';
 import 'package:BloodLine/services/auth.dart';
 import 'package:BloodLine/services/database.dart';
+import 'package:BloodLine/services/local_notifications.dart';
 import 'package:BloodLine/services/notifications.dart';
+import 'package:BloodLine/widgets/customDialog.dart';
+import 'package:BloodLine/widgets/customInput.dart';
+import 'package:BloodLine/widgets/outlineButton.dart' as outlineButton;
+import 'package:BloodLine/widgets/customListTile.dart';
 import 'package:animations/animations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -26,6 +31,8 @@ class HomeState extends State<Home> {
   @override
   void initState() {
     super.initState();
+
+    LocalNotifications().initializing();
 
     //? Request permissions for iOS and web
     firebaseMessaging.requestNotificationPermissions(
@@ -209,7 +216,7 @@ class HomeState extends State<Home> {
                       Column(
                         children: [
                           //! Add a post button
-                          OutlineButton(
+                          outlineButton.OutlineButton(
                             text: "Add post",
                             color: Colors.red[800],
                             borderColor: Colors.red[800],
@@ -221,7 +228,7 @@ class HomeState extends State<Home> {
                             },
                           ),
                           //! Logout button
-                          OutlineButton(
+                          outlineButton.OutlineButton(
                             text: "Logout",
                             color: Colors.red[800],
                             borderColor: Colors.red[800],
@@ -234,7 +241,7 @@ class HomeState extends State<Home> {
                               });
                             },
                           ),
-                          OutlineButton(
+                          outlineButton.OutlineButton(
                             text: "Test",
                             color: Colors.red[800],
                             borderColor: Colors.red[800],
@@ -344,9 +351,9 @@ class HomeState extends State<Home> {
                                       )
                                   );
                                 },
-                                //
+                                ////////////////////////////
                                 //! The open view with post description
-                                //
+                                ///////////////////////////
                                 openBuilder: (context, showCard){
                                   //? Set the opening screen with the custom information about the related post
                                   _postAuthor = doc['name'];
@@ -375,14 +382,17 @@ class HomeState extends State<Home> {
                                               children: [
                                                 doc['user-image']==''?
                                                   Container(
-                                                      width: 80,
-                                                      height: 80,
+                                                      width: 50,
+                                                      height: 50,
                                                       decoration: BoxDecoration(
                                                         borderRadius: BorderRadius.circular(70),
                                                         color: Colors.blueAccent,
                                                       )
                                                   ) :
-                                                  Image.network(doc['user-image']),
+                                                  SizedBox(
+                                                      width: 50,
+                                                      height: 50,
+                                                      child: Image.network(doc['user-image'])),
                                                 Text(_postAuthor)
                                               ],
                                             ),
@@ -428,7 +438,7 @@ class HomeState extends State<Home> {
                                                               child: Row(
                                                                 mainAxisAlignment: MainAxisAlignment.start,
                                                                 children: [
-                                                                  Text('Hospital'),
+                                                                  Flexible(child: Text('Hospital',overflow: TextOverflow.ellipsis,)),
                                                                 ],
                                                               )),
                                                           Container(
@@ -474,7 +484,11 @@ class HomeState extends State<Home> {
                                                               child: Row(
                                                                 mainAxisAlignment: MainAxisAlignment.start,
                                                                 children: [
-                                                                  Text(_postHospital),
+                                                                  Flexible(
+                                                                  child: Text(
+                                                                    _postHospital,
+                                                                  )
+                                                              ),
                                                                 ],
                                                               )),
                                                           Container(
@@ -534,7 +548,7 @@ class HomeState extends State<Home> {
                                                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                                       children: [
                                                         //! Back button
-                                                        OutlineButton(
+                                                        outlineButton.OutlineButton(
                                                           onPressed: (){
                                                             setState(() {
                                                               showCard();
@@ -548,36 +562,106 @@ class HomeState extends State<Home> {
                                                           borderColor: Color(0xFF9dd9d2),
                                                         ),
                                                         //! Join button
-                                                        OutlineButton(
+                                                        outlineButton.OutlineButton(
                                                           onPressed: () async {
                                                             User user = FirebaseAuth.instance.currentUser;
-
-                                                            //! If the user tries to join his own post, a snackbar will appear with a warning
-                                                            //! Else if the user is already joined in a post, a snackbar will appear with a warning
+                                                            // If the user tries to join his own post, a snackbar will appear with a warning
+                                                            // Else if the user is already joined in a post, a snackbar will appear with a warning
                                                             if(user.uid == doc['user-id']) {
-                                                              //! Close the post description
+                                                              // Close the post description
                                                               showCard();
-                                                              //! Show the warning
+                                                              // Show the warning
                                                               final snackbar = SnackBar(
                                                                 content: Text('You cannot join your own post'),
                                                                 duration: Duration(seconds: 2),
                                                               );
                                                               _scaffoldKey.currentState.showSnackBar(snackbar);
-                                                              //! If the user already joined
+                                                              // If the user already joined
                                                             } else if(await DatabaseService().isAlreadyJoined(user.uid, doc.id)){
-                                                                //! Close the post description
+                                                                // Close the post description
                                                                 showCard();
                                                                 final snackbar = SnackBar(content: Text('You already joined in this cause'));
                                                                 _scaffoldKey.currentState.showSnackBar(snackbar);
                                                             } else{
-                                                              //! Add the user to the joined people
-                                                              DatabaseService().addPeopleToPost(user.uid, doc.id);
-                                                              //! Send a notification to the author of the post regarding joining his cause
-                                                              NotificationService().sendJoinNotification(_postAuthorDeviceToken);
-                                                              //! Close the post and show a snackbar
-                                                              showCard();
-                                                              final snackbar = SnackBar(content: Text('You joined the cause!'),);
-                                                              _scaffoldKey.currentState.showSnackBar(snackbar);
+
+                                                              bool isDateSet = false;
+                                                              var dateColor = Colors.white70;
+                                                              // pop up a dialog to choose the desired date to go to transfusion center
+                                                              showGeneralDialog(
+                                                                  context: context,
+                                                                  barrierLabel: "",
+                                                                  barrierColor: Colors.black.withOpacity(0.4),
+                                                                  pageBuilder: (BuildContext context, Animation<double> animation, Animation<double> secondaryAnimation){},
+                                                                  transitionDuration: Duration(milliseconds: 700),
+                                                                  transitionBuilder: (context, animation, secondaryAnimation, child){
+                                                                    // the transition of the dialog window
+                                                                    return ScaleTransition(
+                                                                      scale: CurvedAnimation(
+                                                                          parent: animation,
+                                                                          curve: Curves.elasticOut,
+                                                                          reverseCurve: Curves.easeInOutBack
+                                                                      ),
+                                                                      // the Dialog window
+                                                                      // has a text and two buttons, one which chooses the date of the notification
+                                                                      // and the other finishes the process
+                                                                      child: Dialog(
+                                                                        backgroundColor: Color(0xFF9dd9d2),
+                                                                        insetAnimationDuration: Duration(milliseconds: 1700),
+                                                                        insetAnimationCurve: Curves.easeInOutSine,
+                                                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                                                                        child: Container(
+                                                                          width: windowWidth,
+                                                                          height: windowHeight*0.3,
+                                                                          child: Column(
+                                                                            mainAxisAlignment: MainAxisAlignment.center,
+                                                                            children: [
+                                                                              // the elements from the window
+                                                                              Text('Choose the date of the transfusion'),
+                                                                              RaisedButton(
+                                                                                color: dateColor,
+                                                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
+                                                                                child: Text('Choose date'),
+                                                                                onPressed: (){
+                                                                                  showDatePicker(
+                                                                                      context: context,
+                                                                                      initialDate: DateTime.now(),
+                                                                                      firstDate: DateTime(2021),
+                                                                                      lastDate: DateTime(2025)
+                                                                                  ).then((date) => {
+                                                                                    print('it works here'),
+                                                                                    LocalNotifications().showNotification(date),
+                                                                                    isDateSet = true,
+                                                                                    dateColor = Color(0xff9CD8A9)
+
+                                                                                  }
+                                                                                  );
+                                                                                },
+                                                                              ),
+                                                                              RaisedButton(
+                                                                                  color: Color(0xFFD89CA3),
+                                                                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
+                                                                                  child: Text('Finish!') ,
+                                                                                  onPressed: (){
+                                                                                    if(isDateSet) {
+                                                                                      Navigator.pop(context);
+                                                                                      // Add the user to the joined people
+                                                                                      DatabaseService().addPeopleToPost(user.uid, doc.id);
+                                                                                      // Send a notification to the author of the post regarding joining his cause
+                                                                                      NotificationService().sendJoinNotification(_postAuthorDeviceToken);
+                                                                                      // Close the post and show a snackbar
+                                                                                      showCard();
+                                                                                      final snackbar = SnackBar(content: Text('You joined the cause!'),);
+                                                                                      _scaffoldKey.currentState.showSnackBar(snackbar);
+                                                                                    }
+                                                                                  }
+                                                                              )
+                                                                            ],
+                                                                          ),
+                                                                        ),
+                                                                      ),
+                                                                    );
+                                                                  }
+                                                              );
                                                             }
                                                           },
                                                           width: windowWidth/3.5,
@@ -587,7 +671,6 @@ class HomeState extends State<Home> {
                                                           textColor: Colors.black,
                                                           borderColor: Color(0xFF9dd9d2),
                                                         ),
-
                                                       ],
                                                     )
                                                 ),
@@ -601,14 +684,12 @@ class HomeState extends State<Home> {
                                     ),
                                   );
                                 },
-
                               );
                             }
                         );
                       },
                     ),
                   ),
-
               ]
           ),
 
@@ -686,7 +767,7 @@ class HomeState extends State<Home> {
                   Expanded(
                   flex: 13,
                   child: Container(
-                    decoration: BoxDecoration(
+                      decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(15)
                     ),
                     child: RaisedButton(
@@ -724,7 +805,7 @@ class HomeState extends State<Home> {
                         //! Back button
                         Container(
                           margin: EdgeInsets.all(10),
-                          child: OutlineButton(
+                          child: outlineButton.OutlineButton(
                             onPressed: (){
                               setState((){
                                 _pageState = 0;
@@ -744,7 +825,7 @@ class HomeState extends State<Home> {
                         //! Done button
                         Container(
                             margin: EdgeInsets.all(10),
-                            child: OutlineButton (
+                            child: outlineButton.OutlineButton (
                               height: windowWidth*0.1,
                               width: windowWidth*0.25,
                               fontSize: windowWidth*0.035,
@@ -753,68 +834,89 @@ class HomeState extends State<Home> {
                               borderColor: Colors.red[800],
                               onPressed: () async{
 
-                                //! get the user from the session
-                                User user = FirebaseAuth.instance.currentUser;
-                                //! get the user details from the database
-                                //! will use the 'name' and 'bloodtype' fields
-                                DocumentSnapshot userDetails = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-
-                                //! Format the date to hide the hours and minutes
-                                String expirationDateFormat = DateFormat("dd.MM.yyyy").format(_dateTime);
-                                String postDate = DateFormat("dd.MM.yyyy").format(DateTime.now());
-
-                                String hospital = hospitalController.text;
-                                String description = descriptionController.text;
-
-                                //! add the post to the user history
-                                try {
-                                  FirebaseMessaging().getToken().then((token) => {
-                                      DatabaseService().addPostToUser(
-                                        userDetails['name'],
-                                        userDetails['bloodtype'],
-                                        hospital,
-                                        postDate,
-                                        expirationDateFormat,
-                                        description,
-                                        user.uid,
-                                        token
-                                      )
-                                  });
-
-                                  // //! adds the post to the general user posts branch
-                                  FirebaseMessaging().getToken().then((token) => {
-                                      DatabaseService().addPost(
-                                        userDetails['name'],
-                                        userDetails['bloodtype'],
-                                        hospital,
-                                        postDate,
-                                        expirationDateFormat,
-                                        description,
-                                        user.uid,
-                                        token,
-                                        user.photoURL
-                                      )
-                                  });
-                                  //! Send a notification to all users that have the same blood type
-                                  NotificationService().sendSimilarBloodJoinNotification(userDetails['bloodtype']);
-
-                                } on FirebaseException catch(e){
-                                  print(e.message);
-                                }
-                                setState(()  {
-                                  final snackbar = SnackBar(
-                                    content: Text('Post created!'),
-                                    duration: Duration(seconds: 2),
-                                  );
+                                // the expiration date is before the current date
+                                if(_dateTime.compareTo(DateTime.now()) <= 0){
+                                  SnackBar snackbar = SnackBar(content: Text('Invalid expiration date, choose another!'));
                                   _scaffoldKey.currentState.showSnackBar(snackbar);
+                                }
+                                else if(descriptionController.text.isEmpty || hospitalController.text.isEmpty){
+                                  SnackBar snackbar = SnackBar(content: Text('Complete all fields!'));
+                                  _scaffoldKey.currentState.showSnackBar(snackbar);
+                                }
+                                else {
+                                  //! get the user from the session
+                                  User user = FirebaseAuth.instance.currentUser;
+                                  //! get the user details from the database
+                                  //! will use the 'name' and 'bloodtype' fields
+                                  DocumentSnapshot userDetails = await FirebaseFirestore
+                                      .instance.collection('users').doc(
+                                      user.uid).get();
 
-                                  hospitalController.clear();
-                                  descriptionController.clear();
-                                  _pageState = 0;
-                                });
+                                  //! Format the date to hide the hours and minutes
+                                  String expirationDateFormat = DateFormat(
+                                      "dd.MM.yyyy").format(_dateTime);
+                                  String postDate = DateFormat("dd.MM.yyyy")
+                                      .format(DateTime.now());
+
+                                  String hospital = hospitalController.text;
+                                  String description = descriptionController.text;
+
+                                  //! add the post to the user history
+                                  try {
+                                    FirebaseMessaging().getToken().then((
+                                        token) =>
+                                    {
+                                      DatabaseService().addPostToUser(
+                                          userDetails['name'],
+                                          userDetails['bloodtype'],
+                                          hospital,
+                                          postDate,
+                                          expirationDateFormat,
+                                          description,
+                                          user.uid,
+                                          token
+                                      )
+                                    });
+
+                                    // //! adds the post to the general user posts branch
+                                    FirebaseMessaging().getToken().then((
+                                        token) =>
+                                    {
+                                      DatabaseService().addPost(
+                                          userDetails['name'],
+                                          userDetails['bloodtype'],
+                                          hospital,
+                                          postDate,
+                                          expirationDateFormat,
+                                          description,
+                                          userDetails['city'],
+                                          user.uid,
+                                          token,
+                                          user.photoURL
+                                      )
+                                    });
+                                    //! Send a notification to all users that have the same blood type
+                                    NotificationService()
+                                        .sendSimilarBloodJoinNotification(
+                                        userDetails['bloodtype']);
+                                  } on FirebaseException catch (e) {
+                                    print(e.message);
+                                  }
+                                  setState(() {
+                                    final snackbar = SnackBar(
+                                      content: Text('Post created!'),
+                                      duration: Duration(seconds: 2),
+                                    );
+                                    _scaffoldKey.currentState.showSnackBar(
+                                        snackbar);
+
+                                    hospitalController.clear();
+                                    descriptionController.clear();
+                                    _pageState = 0;
+                                  });
+                                }
                               },
                               text: "Done",
-
                             )
                         ),
                       ],
@@ -833,226 +935,3 @@ Future<dynamic> _onBackgroundMessage(Map<String, dynamic> message) async {
   debugPrint('On background message $message');
   return Future<void>.value();
 }
-
-
-//? the custom card which is used for created posts
-class CustomListTile extends StatelessWidget{
-
-  final Widget profileImage;
-  final String name;
-  final String bloodType;
-  final String city;
-  final String date;
-  final double height;
-  final Color color;
-  final Function onTap;
-
-  CustomListTile({
-    Key key,
-    this.profileImage,
-    this.name,
-    this.bloodType,
-    this.city,
-    this.date,
-    this.height,
-    this.color,
-    this.onTap
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      elevation: 5,
-      shadowColor: Colors.grey,
-      color: color,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-            child: Padding(
-              padding: EdgeInsets.all(10.0),
-              child: SizedBox(
-                height: height,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    //! The card is separated in 3 parts: 1 + 2 + 2 space
-                    //! The profile image of the user
-                    Expanded(
-                      flex: 1,
-                      child: profileImage,
-                    ),
-                    //! Column with name and the city of the user
-                    Expanded(
-                      flex: 2,
-                      child: Column(
-                        children: [
-                          //! Margin between the top of the box and the name
-                          Expanded(child: Text(""), flex: 1,),
-                          Expanded(
-                              flex: 3,
-                              child: Text(name)
-                          ),
-                          Flexible(
-                              flex: 3,
-                              child: Container(
-                                  padding: EdgeInsets.only(left: 10),
-                                  child: Text(
-                                    city,
-                                    overflow: TextOverflow.ellipsis,
-                                  )
-                              )
-                          ),
-                        ],
-                      ),
-                    ),
-                    //! Column with the blood type and the date
-                    Expanded(
-                      flex: 2,
-                      child: Column(
-                        children: [
-                          Expanded(child: Text(""), flex: 1,),
-                          Expanded(
-                              flex: 3,
-                              child: Text(bloodType)
-                          ),
-                          Expanded(
-                              flex: 3,
-                              child: Text(date))
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            )
-        ),
-      ),
-    );
-  }
-
-}
-
-//? classes for custom inputs used for creating posts
-// ignore: must_be_immutable
-class CustomInput extends StatefulWidget{
-  final String hint;
-  final TextEditingController controller;
-  final Color color;
-  final double height;
-  final double width;
-  final TextInputType keyboardType;
-  int minLines = 1;
-  int maxLines = 1;
-  final obscured;
-
-  CustomInput({
-    this.hint,
-    this.controller,
-    this.color,
-    this.height,
-    this.width,
-    this.obscured,
-    this.keyboardType,
-    this.minLines,
-    this.maxLines
-  });
-  @override
-  _CustomInputState createState() => _CustomInputState();
-}
-class _CustomInputState extends State<CustomInput> {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: widget.height,
-      width: widget.width,
-      decoration: BoxDecoration(
-          border: Border.all(
-              color: widget.color,
-              width: 2
-          ),
-          borderRadius: BorderRadius.circular(14)
-      ),
-      child: Row(
-        children: <Widget>[
-          // the input space
-          Expanded(
-            child: TextField(
-              keyboardType: widget.keyboardType,
-              minLines: widget.minLines,
-              maxLines: widget.maxLines,
-              controller: widget.controller,
-              obscureText: widget.obscured,
-              decoration: InputDecoration(
-                contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-                border: InputBorder.none,
-                hintText: widget.hint
-              ),
-            ),
-          )
-        ],
-      ),
-    );
-  }
-}
-
-
-//? classes for contrast, secondary buttons
-// ignore: must_be_immutable
-class OutlineButton extends StatefulWidget{
-  String text; // what text to display inside the button
-  Color color = Colors.black; // what color should be inside that button
-  Color textColor = Colors.white;
-  Color borderColor = Colors.black;
-  double fontSize;
-  double width;
-  double height;
-  final Function onPressed;
-  OutlineButton({
-    this.text,
-    this.color,
-    this.textColor,
-    this.borderColor,
-    this.width,
-    this.height,
-    this.fontSize,
-    this.onPressed
-  });
-
-
-  @override
-  _OutlineButtonState createState() => _OutlineButtonState();
-
-}
-class _OutlineButtonState extends State<OutlineButton>{
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: widget.width,
-      height: widget.height,
-      decoration: BoxDecoration(
-          border: Border.all(
-              color: widget.borderColor,
-              width: 2
-          ),
-          color: widget.color,
-          borderRadius: BorderRadius.circular(10)
-      ),
-      padding: EdgeInsets.all(2),
-      child: Center(
-        child: FlatButton(
-          onPressed: widget.onPressed,
-          highlightColor: Colors.red[700],
-          child: Text(
-            widget.text,
-            style: TextStyle(
-                color: widget.textColor,
-                fontSize: widget.fontSize
-            ),
-          ),
-        ),
-      ),
-
-    );
-  }
-}
-
