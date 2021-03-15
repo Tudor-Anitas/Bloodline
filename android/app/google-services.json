@@ -14,13 +14,21 @@
       },
       "oauth_client": [
         {
+          "client_id": "86184231020-153dqt2cc0847sae1ludj25270b0a6d6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.puddlekraken.bloodline",
+            "certificate_hash": "736553f1cb8b027bc7963049ea361ec23925151b"
+          }
+        },
+        {
           "client_id": "86184231020-hlq0q8rr3iihes828lpgeu5mfmrj3qmc.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyD9zh9DAcmpmcfrKNJ01uIny-OHXiWTjz0"
+          "current_key": "AIzaSyCssneQei0piKKDXkAa1pr1TU_7IDYtmvU"
         }
       ],
       "services": {

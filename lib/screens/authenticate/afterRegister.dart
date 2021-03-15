@@ -35,7 +35,7 @@ class _DetailsState extends State<Details>{
     double windowWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      resizeToAvoidBottomPadding: false,
+
       body: AnimatedContainer(
           duration: Duration(milliseconds: 700),
           curve: Curves.bounceIn,

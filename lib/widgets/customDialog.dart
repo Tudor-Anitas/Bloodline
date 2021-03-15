@@ -3,23 +3,23 @@ import 'package:BloodLine/services/local_notifications.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-class CustomDialog extends StatefulWidget{
+class DonationReservationDialog extends StatefulWidget{
 
   var width;
   var height;
 
-  CustomDialog({
+  DonationReservationDialog({
       this.width,
       this.height
   });
 
   @override
   State<StatefulWidget> createState() {
-    return _CustomDialogState();
+    return _DonationReservationDialogState();
   }
 }
 
-class _CustomDialogState extends State<CustomDialog>{
+class _DonationReservationDialogState extends State<DonationReservationDialog>{
 
   bool isDateSet = false;
   var dateColor = Colors.white70;

@@ -44,8 +44,6 @@ class _TestpageState extends State<Testpage> {
   String _postAuthor = '';
   String _postCity = '';
 
-
-
   double windowHeight;
   double windowWidth;
 
@@ -58,6 +56,8 @@ class _TestpageState extends State<Testpage> {
 
   }
 
+  // places api to transfusion centers
+  // https://maps.googleapis.com/maps/api/place/textsearch/json?query=transfuzie+in+Baia%Mare&key=AIzaSyCfbIFx8Ph6cMRDhnyX0R1asLz8QVeMypo
   @override
   Widget build(BuildContext context) {
 
@@ -341,13 +341,12 @@ class _TestpageState extends State<Testpage> {
                               ),
                             );
                         },
-
                       );
                     }
                 );
               },
             ),
-            RaisedButton(
+            ElevatedButton(
                 onPressed: (){
                     showGeneralDialog(
                       context: context,
@@ -363,12 +362,12 @@ class _TestpageState extends State<Testpage> {
                                 curve: Curves.elasticOut,
                                 reverseCurve: Curves.easeInOutBack
                               ),
-                              child: CustomDialog(width: windowWidth, height: windowHeight*0.3,),
+                              child: DonationReservationDialog(width: windowWidth, height: windowHeight*0.3,),
                           );
                       }
                     );
-
                 },
+              child: Text(''),
             )
         ],
       ),

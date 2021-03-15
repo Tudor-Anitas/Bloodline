@@ -17,6 +17,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'package:BloodLine/screens/authenticate/authenticate.dart';
 import '../../test.dart';
+import '../maps.dart';
 
 class Home extends StatefulWidget{
   @override
@@ -156,19 +157,15 @@ class HomeState extends State<Home> {
         break;
     }
 
-
     return Scaffold(
-      resizeToAvoidBottomPadding: false,
       key: _scaffoldKey,
-
+      resizeToAvoidBottomInset: true,
       body: Stack(
         children: [
 
           //! Side Menu
           Scaffold(
             backgroundColor: Colors.red[800],
-
-
             //! The white space where posts lay
             body: Column(
               children: [
@@ -181,7 +178,6 @@ class HomeState extends State<Home> {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       Container(
-
                         child: FlatButton(
                             onPressed: (){
                               setState(() {
@@ -201,7 +197,10 @@ class HomeState extends State<Home> {
                   ),
                 ),
                 //! Empty space
-                Expanded(child: Text(''), flex: 30,),
+                Expanded(
+                  flex: 30,
+                  child: Text('')
+                ),
                 //! The menu options
                 Expanded(
                   flex: 70,
@@ -225,6 +224,19 @@ class HomeState extends State<Home> {
                               setState(() {
                                 _pageState = 1;
                               });
+                            },
+                          ),
+                          // Centers Map
+                          outlineButton.OutlineButton(
+                            text: "Centers",
+                            color: Colors.red[800],
+                            borderColor: Colors.red[800],
+                            textColor: Colors.white,
+                            onPressed: (){
+                              Navigator.push(
+                                  context, 
+                                  MaterialPageRoute(builder: (context) => Maps())
+                              );
                             },
                           ),
                           //! Logout button
