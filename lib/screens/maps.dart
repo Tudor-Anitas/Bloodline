@@ -16,6 +16,7 @@ class _MapsPage extends State<Maps>{
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+
       body: Center(
         child: CentersMap()
       ),

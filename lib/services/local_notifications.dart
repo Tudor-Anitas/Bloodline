@@ -1,6 +1,9 @@
-
+import 'package:BloodLine/main.dart';
+import 'package:BloodLine/screens/maps.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:get/get.dart';
 
 class LocalNotifications {
 
@@ -53,5 +56,6 @@ class LocalNotifications {
       debugPrint('notification payload: $payload');
     }
     // set the navigator to the google maps
+    Get.to(Maps());
   }
 }

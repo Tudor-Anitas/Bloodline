@@ -106,7 +106,6 @@ class AuthService{
         catch(e){
           print(e);
         }
-
       }
     }
     catch (e){

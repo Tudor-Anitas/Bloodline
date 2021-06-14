@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:keyboard_visibility/keyboard_visibility.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:BloodLine/screens/authenticate/afterRegister.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -47,7 +48,7 @@ class LoginPageState extends State<LoginPage>{
 
   FirebaseAuth _auth;
 
-  List<String> headlines = ["Text here", "Login", "Register"];
+  List<String> headlines = ["Welcome!", "Login", "Register"];
 
 
   @override
@@ -303,12 +304,14 @@ class LoginPageState extends State<LoginPage>{
                 ),
                 //! Google and Fb icons
                 Expanded(
-                  flex: 20,
+                  flex: 30,
                   child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       //! Google auth
                       IconButton(
-                          icon: Icon(Icons.details),
+                          icon: SvgPicture.asset('assets/icons/google.svg',width: 50, height: 50,),
+                          iconSize: 50,
                           onPressed: () async {
                             try{
                               if(await AuthService(_auth).signInWithGoogle()){
@@ -323,9 +326,11 @@ class LoginPageState extends State<LoginPage>{
                             }
                         },
                       ),
+                      // space between the icons
+                      SizedBox(width: 30, height: 50,),
                       //! Facebook auth
                       IconButton(
-                        icon: Icon(Icons.delete),
+                        icon: SvgPicture.asset('assets/icons/facebook.svg', width: 40, height: 40,),
                         onPressed: () async{
                           try{
                             if(await AuthService(_auth).signInWithFacebook()){
@@ -344,7 +349,7 @@ class LoginPageState extends State<LoginPage>{
                   ),
                 ),
                 //! Empty space
-                Expanded(child: Text(''), flex: 40,),
+                Expanded(child: Text(''), flex: 30,),
                 //! Login button
                 Expanded(
                 flex: 40,

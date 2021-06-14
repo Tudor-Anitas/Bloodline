@@ -20,6 +20,7 @@ Future<void> main() async{
 
 
 class Bloodline extends StatelessWidget {
+
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
@@ -34,12 +35,19 @@ class Bloodline extends StatelessWidget {
         ],
         // Start the app inside the wrapper to know if there is a user logged in
         // of if there isn't one
-        child: MaterialApp(
-            theme: ThemeData(
-                fontFamily: "Nunito"
-            ),
-            debugShowCheckedModeBanner: false,
-            home: Wrapper()
+        child: GestureDetector(
+          onTap: (){
+            FocusScopeNode currentFocus = FocusScope.of(context);
+            if(!currentFocus.hasPrimaryFocus)
+              currentFocus.unfocus();
+          },
+          child: MaterialApp(
+              theme: ThemeData(
+                  fontFamily: "Nunito"
+              ),
+              debugShowCheckedModeBanner: false,
+              home: Wrapper()
+          ),
         ));
   }
 }

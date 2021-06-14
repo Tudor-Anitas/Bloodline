@@ -89,16 +89,19 @@ class DatabaseService{
   }
 
   Future removeExpiredPosts() async{
-    //return await userPosts.doc(postid).delete();
-    userPosts.where('expiration-date', isLessThan: DateFormat('dd.MM.yyyy').format(DateTime.now()))
-        .get()
-        .then((snapshot){
-          for(DocumentSnapshot doc in snapshot.docs){
-            print('posts exist');
-            doc.reference.delete();
-          }
-    });
-    print('posts deleted');
+    // the current time
+    DateTime now = DateTime.now();
+
+    // get the snapshot with all the posts in the general collection
+    QuerySnapshot snapshot = await userPosts.get();
+    for(DocumentSnapshot doc in snapshot.docs) {
+      // fetch the expiration date and convert it into date time
+      String expirationString = doc.data()['expiration-date'];
+      DateTime expiration = DateTime.parse(expirationString);
+      // if the expiration date is before the current date, delete it
+      if(now.compareTo(expiration) > 0)
+        doc.reference.delete();
+    }
   }
 
 }

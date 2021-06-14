@@ -7,6 +7,7 @@
          FlutterApplication and put your custom class here. -->
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.INTERNET"/>
 
@@ -66,6 +67,7 @@
         <meta-data android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyCfbIFx8Ph6cMRDhnyX0R1asLz8QVeMypo"/>
 
+        <!-- facebook activities -->
         <activity android:name="com.facebook.FacebookActivity"
             android:configChanges=
                 "keyboard|keyboardHidden|screenLayout|screenSize|orientation"

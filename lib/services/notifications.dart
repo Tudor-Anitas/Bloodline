@@ -16,6 +16,7 @@ class NotificationService {
   /// Sends a http request at the Firebase Cloud Messaging API to display a notification
   /// on the targeted device through token
   Future<Map<String, dynamic>> sendJoinNotification(String token) async{
+    print(token);
     await http.post(
       'https://fcm.googleapis.com/fcm/send',
       headers: <String, String>{
@@ -38,6 +39,7 @@ class NotificationService {
         }
       )
     );
+
     final Completer<Map<String, dynamic>> completer = Completer<Map<String, dynamic>>();
 
     _firebaseMessaging.configure(
@@ -47,6 +49,48 @@ class NotificationService {
     );
 
     return completer.future;
+  }
+
+  Future<Map<String, dynamic>> debugNotification() async{
+    try {
+      await http.post(
+          'https://fcm.googleapis.com/fcm/send',
+          headers: <String, String>{
+            'Content-Type': 'application/json',
+            'Authorization': 'key=$serverKey'
+          },
+          body: jsonEncode(
+              <String, dynamic>{
+                'notification': <String, dynamic>{
+                  'body': 'Check your post',
+                  'title': 'Somebody just joined your cause!'
+                },
+                'priority': 'high',
+                'data': <String, dynamic>{
+                  'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+                  'id': '1',
+                  'status': 'done'
+                },
+                'to': 'efcv0JTmQTq9vKkK0qMNp2:APA91bGKKWo3yhmLWyK0xky6fSxCF6K6QUpmx7uQdHNJsaRpv40TaIRea6BR1Tm2QkqBxYMfP8TQBG9-XF-_E3yj0g3dnTnchztwQSjzoe4Q61dEh3PLhvNK-FsqYRGF7Cf66xMPd68w'
+              }
+          )
+      );
+
+      final Completer<Map<String, dynamic>> completer = Completer<
+          Map<String, dynamic>>();
+
+      _firebaseMessaging.configure(
+          onMessage: (Map<String, dynamic> message) async {
+            completer.complete(message);
+          }
+      );
+
+      return completer.future;
+    } catch(e){
+      print(e);
+    }
+
+
   }
 
   /// Get all users that have the specified bloodtype and are in the same city

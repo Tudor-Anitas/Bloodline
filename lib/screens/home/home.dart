@@ -51,6 +51,8 @@ class HomeState extends State<Home> {
       onBackgroundMessage: _onBackgroundMessage
     );
 
+
+
     //! Deletes all expired posts from the database
     DatabaseService().removeExpiredPosts();
   }
@@ -159,12 +161,13 @@ class HomeState extends State<Home> {
 
     return Scaffold(
       key: _scaffoldKey,
-      resizeToAvoidBottomInset: true,
+      resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
 
           //! Side Menu
           Scaffold(
+            resizeToAvoidBottomInset: false,
             backgroundColor: Colors.red[800],
             //! The white space where posts lay
             body: Column(
@@ -221,6 +224,10 @@ class HomeState extends State<Home> {
                             borderColor: Colors.red[800],
                             textColor: Colors.white,
                             onPressed: (){
+                              FocusScopeNode currentFocus = FocusScope.of(context);
+                              if (!currentFocus.hasPrimaryFocus) {
+                                currentFocus.unfocus();
+                              }
                               setState(() {
                                 _pageState = 1;
                               });
@@ -233,6 +240,10 @@ class HomeState extends State<Home> {
                             borderColor: Colors.red[800],
                             textColor: Colors.white,
                             onPressed: (){
+                              FocusScopeNode currentFocus = FocusScope.of(context);
+                              if (!currentFocus.hasPrimaryFocus) {
+                                currentFocus.unfocus();
+                              }
                               Navigator.push(
                                   context, 
                                   MaterialPageRoute(builder: (context) => Maps())
@@ -247,6 +258,10 @@ class HomeState extends State<Home> {
                             textColor: Colors.white,
                             onPressed: (){
                               setState(() {
+                                FocusScopeNode currentFocus = FocusScope.of(context);
+                                if (!currentFocus.hasPrimaryFocus) {
+                                  currentFocus.unfocus();
+                                }
                                 AuthService(FirebaseAuth.instance).signOut();
                                 Navigator.of(context).pushNamedAndRemoveUntil('/', (Route<dynamic>route) => false);
 
@@ -260,6 +275,11 @@ class HomeState extends State<Home> {
                             textColor: Colors.white,
                             onPressed: (){
                               setState(() {
+                                // ensures the keyboard is closed such that it doesn't open randomly
+                                FocusScopeNode currentFocus = FocusScope.of(context);
+                                if (!currentFocus.hasPrimaryFocus) {
+                                  currentFocus.unfocus();
+                                }
                                 Navigator.of(context).push(MaterialPageRoute(builder: (context)=>Testpage()));
                               });
                             },
@@ -336,12 +356,13 @@ class HomeState extends State<Home> {
                                       child: CustomListTile(
                                         height: windowHeight * 0.1,
                                         color: Colors.white,
-                                        profileImage: doc['user-image']==""?
+                                        profileImage: doc['user-image']==null?
                                             Container(
-                                            decoration: BoxDecoration(
-                                                borderRadius: BorderRadius.circular(70),
-                                                color: Colors.blueAccent
-                                                )
+                                              width: 70,
+                                              height: 80,
+                                              decoration: BoxDecoration(
+                                                  color: Colors.blueAccent
+                                                  )
                                             ) :
                                             Image.network(doc['user-image']),
 
@@ -392,12 +413,11 @@ class HomeState extends State<Home> {
                                             child: Row(
                                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                               children: [
-                                                doc['user-image']==''?
+                                                doc['user-image']==null?
                                                   Container(
                                                       width: 50,
                                                       height: 50,
                                                       decoration: BoxDecoration(
-                                                        borderRadius: BorderRadius.circular(70),
                                                         color: Colors.blueAccent,
                                                       )
                                                   ) :
@@ -653,13 +673,13 @@ class HomeState extends State<Home> {
                                                                                   color: Color(0xFFD89CA3),
                                                                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
                                                                                   child: Text('Finish!') ,
-                                                                                  onPressed: (){
+                                                                                  onPressed: () async{
                                                                                     if(isDateSet) {
                                                                                       Navigator.pop(context);
                                                                                       // Add the user to the joined people
                                                                                       DatabaseService().addPeopleToPost(user.uid, doc.id);
                                                                                       // Send a notification to the author of the post regarding joining his cause
-                                                                                      NotificationService().sendJoinNotification(_postAuthorDeviceToken);
+                                                                                      await NotificationService().sendJoinNotification(_postAuthorDeviceToken);
                                                                                       // Close the post and show a snackbar
                                                                                       showCard();
                                                                                       final snackbar = SnackBar(content: Text('You joined the cause!'),);
@@ -866,8 +886,8 @@ class HomeState extends State<Home> {
 
                                   //! Format the date to hide the hours and minutes
                                   String expirationDateFormat = DateFormat(
-                                      "dd.MM.yyyy").format(_dateTime);
-                                  String postDate = DateFormat("dd.MM.yyyy")
+                                      "yyyy-MM-dd").format(_dateTime);
+                                  String postDate = DateFormat("yyyy-MM-dd")
                                       .format(DateTime.now());
 
                                   String hospital = hospitalController.text;
